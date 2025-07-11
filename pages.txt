@@ -1,0 +1,3460 @@
+# Pages module for EduScan Somaliaimport streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
+from datetime import datetime, date
+import json
+import os
+import sys
+from utils.model_utils import load_model, make_prediction
+from utils.data_utils import save_prediction_data, load_student_data
+from utils.image_utils import get_image_html, create_image_gallery, get_student_images
+from utils.educational_images import get_diverse_educational_images
+from utils.image_base64 import get_base64_images, get_image_html as get_b64_image_html
+from utils.language_utils import get_text, load_app_settings
+
+# Initialize language in session state
+if 'app_language' not in st.session_state:
+    settings = load_app_settings()
+    st.session_state['app_language'] = settings.get('language', 'English')
+
+# Get current language
+language = st.session_state.get('app_language', 'English')
+
+st.set_page_config(
+    page_title=f"{get_text('assessment_form', language)} - EduScan",
+    page_icon="⭕",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# CSS matching the main app design
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    .stApp {
+        font-family: 'Poppins', sans-serif !important;
+        background: linear-gradient(rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0.95)), 
+                    url('data:image/jpeg;base64,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');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    .stDeployButton {display: none;}
+    #MainMenu {visibility: hidden;}
+    .stHeader {display: none;}
+    .stToolbar {display: none;}
+    
+    .css-1d391kg {
+        background-color: white !important;
+        border-right: 1px solid #e5e7eb !important;
+    }
+    
+    .main .block-container {
+        background-color: #f8fafc !important;
+        padding: 1.5rem !important;
+        max-width: none !important;
+    }
+    
+    .page-header {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+    }
+    
+    .student-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .student-card {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .student-card img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .highlight-text {
+        background: linear-gradient(135deg, #FFD23F, #FF6B35);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: bold;
+    }
+    
+    .results-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        margin: 2rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def validate_inputs(math_score, reading_score, writing_score, attendance, behavior, literacy):
+    """Validate all input parameters"""
+    errors = []
+    
+    if not (0 <= math_score <= 100):
+        errors.append("Math score must be between 0 and 100")
+    if not (0 <= reading_score <= 100):
+        errors.append("Reading score must be between 0 and 100")
+    if not (0 <= writing_score <= 100):
+        errors.append("Writing score must be between 0 and 100")
+    if not (0 <= attendance <= 100):
+        errors.append("Attendance must be between 0 and 100%")
+    if not (1 <= behavior <= 5):
+        errors.append("Behavior rating must be between 1 and 5")
+    if not (1 <= literacy <= 10):
+        errors.append("Literacy level must be between 1 and 10")
+    
+    return errors
+
+def create_risk_visualization(prediction_prob, student_data):
+    """Create visualization for risk assessment"""
+    
+    # Risk gauge chart
+    fig_gauge = go.Figure(go.Indicator(
+        mode = "gauge+number+delta",
+        value = prediction_prob * 100,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Learning Difficulty Risk Level (%)"},
+        delta = {'reference': 30},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "darkblue"},
+            'steps': [
+                {'range': [0, 30], 'color': "lightgreen"},
+                {'range': [30, 70], 'color': "yellow"},
+                {'range': [70, 100], 'color': "red"}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': 70
+            }
+        }
+    ))
+    
+    fig_gauge.update_layout(height=300)
+    
+    # Performance radar chart
+    categories = ['Math Score', 'Reading Score', 'Writing Score', 'Attendance', 'Behavior*20', 'Literacy*10']
+    values = [
+        student_data['math_score'],
+        student_data['reading_score'], 
+        student_data['writing_score'],
+        student_data['attendance'],
+        student_data['behavior'] * 20,
+        student_data['literacy'] * 10
+    ]
+    
+    fig_radar = go.Figure()
+    
+    fig_radar.add_trace(go.Scatterpolar(
+        r=values,
+        theta=categories,
+        fill='toself',
+        name='Student Performance'
+    ))
+    
+    fig_radar.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100]
+            )),
+        showlegend=True,
+        title="Student Performance Profile",
+        height=400
+    )
+    
+    return fig_gauge, fig_radar
+
+def display_recommendations(risk_level, student_data):
+    """Display personalized recommendations based on risk level"""
+    
+    if risk_level == "Low Risk":
+        st.success(" Low Risk - Continue current support strategies")
+        recommendations = [
+            "Maintain current learning pace and methods",
+            "Continue regular progress monitoring",
+            "Encourage continued engagement in all subjects",
+            "Consider enrichment activities to challenge the student"
+        ]
+        color = "green"
+    elif risk_level == "Medium Risk":
+        st.warning("️ Medium Risk - Enhanced monitoring recommended")
+        recommendations = [
+            "Implement targeted interventions in lower-performing areas",
+            "Increase frequency of progress monitoring",
+            "Consider additional support in specific subjects",
+            "Engage parents in home-based learning activities",
+            "Explore different teaching methods and materials"
+        ]
+        color = "orange"
+    else:
+        st.error("High Risk - Immediate intervention required")
+        recommendations = [
+            "Initiate comprehensive assessment by learning specialists",
+            "Implement intensive intervention strategies",
+            "Consider individualized education plan (IEP)",
+            "Increase collaboration between teachers and parents",
+            "Explore assistive technologies and adaptive methods",
+            "Regular monitoring and adjustment of intervention strategies"
+        ]
+        color = "red"
+    
+    st.markdown(f"### Recommended Actions")
+    for i, rec in enumerate(recommendations, 1):
+        st.markdown(f"{i}. {rec}")
+
+def main():
+    # Page header
+    st.markdown(f"""
+    <div class="page-header">
+        <h1 class="page-title">{get_text('assessment_form', language)}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add authentic student images
+    images = get_student_images()
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(get_image_html(images['focused_student'], "Student Assessment", "100%", "200px"), unsafe_allow_html=True)
+
+    
+    # Student showcase section
+    st.markdown(f"""
+    <div class="input-section">
+        <h2 class="highlight-text">{get_text('empowering_student_success', language)}</h2>
+        <div class="student-showcase">
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add student image gallery
+    st.markdown("### Student Assessment Success")
+    images = get_student_images()
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(get_image_html(images['exam_students'], "Assessment Excellence", "100%", "180px"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(get_image_html(images['happy_students'], "Learning Success", "100%", "180px"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(get_image_html(images['student_portrait'], "Academic Achievement", "100%", "180px"), unsafe_allow_html=True)
+    
+    # Sidebar for navigation
+    with st.sidebar:
+        st.markdown("### Prediction Options")
+        prediction_type = st.selectbox(
+            "Choose prediction type:",
+            ["Single Student", "Batch Upload", "Historical Analysis"]
+        )
+        
+        # Model information panel
+        st.markdown("### Model Information")
+        st.info("""
+        **Your Trained Model Active**
+        
+        - **Type**: RandomForest Classifier
+        - **Features**: 6 key metrics
+        - **Normalization**: StandardScaler
+        - **Training**: GridSearchCV optimized
+        - **Status**: Ready for predictions
+        """)
+        
+        # Show model features
+        st.markdown("**Input Features:**")
+        features = [
+            "Math Score (0-100)",
+            "Reading Score (0-100)", 
+            "Writing Score (0-100)",
+            "Attendance Rate (%)",
+            "Behavior Score (1-5)",
+            "Literacy Level (1-10)"
+        ]
+        for feature in features:
+            st.markdown(f"• {feature}")
+            
+        # Performance note
+        st.success("Model loaded successfully from your notebook specifications")
+        
+        if prediction_type == "Batch Upload":
+            st.markdown("#### Upload CSV File")
+            uploaded_file = st.file_uploader(
+                "Upload student data (CSV)",
+                type=['csv'],
+                help="CSV should contain columns: math_score, reading_score, writing_score, attendance, behavior, literacy"
+            )
+
+    if prediction_type == "Single Student":
+        # Single student prediction form
+        col1, col2 = st.columns(2)
+        
+        st.markdown(f"""
+        <div class="input-section">
+            <h2 class="highlight-text">{get_text('assessment_form', language)}</h2>
+            <p style="font-size: 1.1em; margin-bottom: 2rem; color: #2C3E50;">
+                {get_text('comprehensive_assessment', language)}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Load base64 images for section headers
+        b64_images = get_base64_images()
+        
+        # Get reset counter for unique widget keys
+        reset_counter = st.session_state.get('reset_counter', 0)
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown(f"""
+            <div class="input-section">
+                <h3 class="highlight-text">{get_text('academic_performance', language)}</h3>
+                {get_b64_image_html(b64_images['academic_performance'], get_text('academic_performance', language), "100%", "150px")}
+            </div>
+            """, unsafe_allow_html=True)
+            # Academic inputs as number boxes (matching PyQt5 design)  
+            math_score = st.number_input(get_text('math_score', language), min_value=0, max_value=100, value=75, step=1, key=f"math_score_input_{reset_counter}")
+            reading_score = st.number_input(get_text('reading_score', language), min_value=0, max_value=100, value=80, step=1, key=f"reading_score_input_{reset_counter}")
+            writing_score = st.number_input(get_text('writing_score', language), min_value=0, max_value=100, value=70, step=1, key=f"writing_score_input_{reset_counter}")
+            
+        with col2:
+            st.markdown(f"""
+            <div class="input-section">
+                <h3 class="highlight-text">{get_text('behavioral_social_indicators', language)}</h3>
+                {get_b64_image_html(b64_images['behavioral_social'], get_text('behavioral_social_indicators', language), "100%", "150px")}
+            </div>
+            """, unsafe_allow_html=True)
+            attendance = st.slider(get_text('attendance', language), 0, 100, 85, help="Percentage of school days attended", key=f"attendance_slider_{reset_counter}")
+            behavior_options = [f"1 - {get_text('poor', language)}", f"2 - {get_text('below_average', language)}", f"3 - {get_text('average', language)}", f"4 - {get_text('good', language)}", f"5 - {get_text('excellent', language)}"]
+            behavior_selection = st.select_slider(get_text('behavior_rating', language), options=behavior_options, value=f"3 - {get_text('average', language)}", 
+                                                 help="Select the student's typical classroom behavior", key=f"behavior_slider_{reset_counter}")
+            behavior = int(behavior_selection.split(' ')[0])  # Extract the number
+            literacy_options = [f'{i} - {"Beginner" if i <= 3 else "Developing" if i <= 6 else "Advanced"}' for i in range(1, 11)]
+            literacy_selection = st.select_slider(get_text('literacy_level', language), options=literacy_options, value="6 - Developing",
+                                                help="Select the student's reading and literacy level", key=f"literacy_slider_{reset_counter}")
+            literacy = int(literacy_selection.split(' ')[0])  # Extract the number
+        
+        # Enhanced student information section
+        # Get base64 images for authentic display
+        b64_images = get_base64_images()
+        
+        st.markdown(f"""
+        <div class="input-section">
+            <h3 class="highlight-text">{get_b64_image_html(b64_images['student_information_2'], "Student Information", "200px", "50px")}</h3>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                {get_b64_image_html(b64_images['student_portrait'], "Somali Student Portrait", "30%", "100px")}
+                {get_b64_image_html(b64_images['student_writing'], "Student Learning", "30%", "100px")}
+                {get_b64_image_html(b64_images['exam_students'], "Exam Students", "30%", "100px")}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col3, col4 = st.columns(2)
+        
+        with col3:
+            student_name = st.text_input(get_text('student_name', language), help="For record keeping and tracking purposes", key=f"student_name_input_{reset_counter}")
+            grade_level = st.selectbox(get_text('grade_level', language), ["Pre-K", "K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"], key=f"grade_level_select_{reset_counter}")
+        
+        with col4:
+            notes = st.text_area("Teacher notes", placeholder="Teacher notes…", help="Any relevant observations", height=100, key=f"teacher_notes_input_{reset_counter}")
+        
+        # Action buttons
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            predict_button = st.button(get_text('analyze_learning_risk', language), type="primary", use_container_width=True)
+        
+        with col2:
+            reset_button = st.button(get_text('clear_form', language), use_container_width=True)
+        
+        with col3:
+            save_button = st.button("Save Data", use_container_width=True)
+        
+        if reset_button:
+            # Clear ALL session state completely for a fresh start
+            all_keys = list(st.session_state.keys())
+            
+            # Keep only essential app settings
+            keys_to_keep = ['app_language', 'app_theme']
+            
+            for key in all_keys:
+                if key not in keys_to_keep:
+                    del st.session_state[key]
+            
+            # Increment reset counter to force widget recreation with new keys
+            if 'reset_counter' not in st.session_state:
+                st.session_state['reset_counter'] = 0
+            st.session_state['reset_counter'] += 1
+            
+            st.success("✅ Form completely reset! Ready for new student assessment.")
+            st.rerun()
+        
+        # Only show results if analysis has been run and form hasn't been reset
+        show_results = st.session_state.get('show_prediction_results', False)
+        
+        if predict_button:
+            # Validate inputs
+            errors = validate_inputs(math_score, reading_score, writing_score, attendance, behavior, literacy)
+            
+            if errors:
+                st.error(get_text('please_correct_errors', language))
+                for error in errors:
+                    st.error(f"• {error}")
+            else:
+                # Make prediction
+                student_data = {
+                    'math_score': math_score,
+                    'reading_score': reading_score,
+                    'writing_score': writing_score,
+                    'attendance': attendance,
+                    'behavior': behavior,
+                    'literacy': literacy
+                }
+                
+                try:
+                    prediction, prediction_prob = make_prediction(student_data)
+                    
+                    # Store results and set flag to show them
+                    st.session_state['show_prediction_results'] = True
+                    st.session_state['current_prediction_data'] = {
+                        'prediction': prediction,
+                        'prediction_prob': prediction_prob,
+                        'student_data': student_data,
+                        'student_name': student_name,
+                        'grade_level': grade_level,
+                        'notes': notes
+                    }
+                    
+                    # Enhanced results display
+                    st.markdown(f"""
+                    <div class="results-section">
+                        <h2 class="highlight-text">{get_text('assessment_results', language)}</h2>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                            {get_b64_image_html(b64_images['exam_students'], "Exam Students", "30%", "120px")}
+                            {get_b64_image_html(b64_images['student_writing'], "Student Writing", "30%", "120px")}
+                            {get_b64_image_html(b64_images['student_portrait'], "Student Portrait", "30%", "120px")}
+                        </div>
+                        <p style="font-size: 1.2em; text-align: center; color: #2C3E50; margin-bottom: 2rem;">
+                            <strong>{get_text('comprehensive_assessment', language)} {student_name if student_name else "the student"}</strong>
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Determine risk level
+                    if prediction_prob < 0.3:
+                        risk_level = get_text('low_risk', language)
+                        risk_color = "#00A86B"
+                        risk_icon = ""
+                    elif prediction_prob < 0.7:
+                        risk_level = get_text('medium_risk', language)
+                        risk_color = "#FF6B35"
+                        risk_icon = "️"
+                    else:
+                        risk_level = get_text('high_risk', language)
+                        risk_color = "#E74C3C"
+                        risk_icon = "!"
+                    
+                    # Risk level display
+                    st.markdown(f"""
+                    <div class="results-section" style="text-align: center; background: linear-gradient(135deg, {risk_color}20, {risk_color}10);">
+                        <h2 style="color: {risk_color};">{risk_icon} {risk_level}</h2>
+                        <h3 style="color: {risk_color};">Confidence Level: {prediction_prob:.1%}</h3>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Create visualizations
+                    fig_gauge, fig_radar = create_risk_visualization(prediction_prob, student_data)
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div class="results-section">
+                            <h3 class="highlight-text">{get_text('risk_assessment_gauge', language)}</h3>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.plotly_chart(fig_gauge, use_container_width=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div class="results-section">
+                            <h3 class="highlight-text">{get_text('student_performance_profile', language)}</h3>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.plotly_chart(fig_radar, use_container_width=True)
+                    
+                    # Display recommendations
+                    st.markdown(f"""
+                    <div class="results-section">
+                        <h3 class="highlight-text">{get_text('personalized_intervention_recommendations', language)}</h3>
+                        <img src="attached_assets/somalia-children-in-class_1751965339107.jpg" 
+                             style="width: 100%; height: 150px; object-fit: cover; border-radius: 15px; margin-bottom: 1rem;">
+                    </div>
+                    """, unsafe_allow_html=True)
+                    display_recommendations(risk_level, student_data)
+                    
+                    # Enhanced summary table
+                    st.markdown(f"""
+                    <div class="results-section">
+                        <h3 class="highlight-text">{get_text('assessment_summary', language)}</h3>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    summary_data = {
+                        "Assessment Area": ["Mathematics", "Reading", "Writing", "Attendance", "Behavior", "Literacy", "Overall Risk", "AI Confidence"],
+                        "Score/Rating": [f"{math_score}%", f"{reading_score}%", f"{writing_score}%", f"{attendance}%", f"{behavior}/5", f"{literacy}/10", risk_level, f"{prediction_prob:.1%}"]
+                    }
+                    st.table(pd.DataFrame(summary_data))
+                    
+                    # Save prediction option
+                    if save_button or st.button(" Save This Prediction"):
+                        prediction_record = {
+                            "timestamp": datetime.now().isoformat(),
+                            "student_name": student_name,
+                            "grade_level": grade_level,
+                            "prediction": prediction,
+                            "probability": prediction_prob,
+                            "risk_level": risk_level,
+                            "notes": notes,
+                            **student_data
+                        }
+                        save_prediction_data(prediction_record)
+                        st.success(" Prediction saved successfully!")
+                
+                except Exception as e:
+                    st.error(f" Error making prediction: {str(e)}")
+                    st.info("Note: Using sample prediction model. Replace with your trained model file.")
+        
+        # Display results only if they exist and haven't been cleared
+        if show_results and 'current_prediction_data' in st.session_state:
+            pred_data = st.session_state['current_prediction_data']
+            prediction = pred_data['prediction']
+            prediction_prob = pred_data['prediction_prob']
+            student_data = pred_data['student_data']
+            student_name = pred_data['student_name']
+            grade_level = pred_data['grade_level']
+            notes = pred_data['notes']
+            
+            # Get base64 images
+            b64_images = get_base64_images()
+            
+            # Enhanced results display
+            st.markdown(f"""
+            <div class="results-section">
+                <h2 class="highlight-text">{get_text('assessment_results', language)}</h2>
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                    {get_b64_image_html(b64_images['exam_students'], "Exam Students", "30%", "120px")}
+                    {get_b64_image_html(b64_images['student_writing'], "Student Writing", "30%", "120px")}
+                    {get_b64_image_html(b64_images['student_portrait'], "Student Portrait", "30%", "120px")}
+                </div>
+                <p style="font-size: 1.2em; text-align: center; color: #2C3E50; margin-bottom: 2rem;">
+                    <strong>{get_text('comprehensive_assessment', language)} {student_name if student_name else "the student"}</strong>
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Determine risk level
+            if prediction_prob < 0.3:
+                risk_level = get_text('low_risk', language)
+                risk_color = "#00A86B"
+                risk_icon = ""
+            elif prediction_prob < 0.7:
+                risk_level = get_text('medium_risk', language)
+                risk_color = "#FF6B35"
+                risk_icon = "️"
+            else:
+                risk_level = get_text('high_risk', language)
+                risk_color = "#E74C3C"
+                risk_icon = "!"
+            
+            # Risk level display
+            st.markdown(f"""
+            <div class="results-section" style="text-align: center; background: linear-gradient(135deg, {risk_color}20, {risk_color}10);">
+                <h2 style="color: {risk_color};">{risk_icon} {risk_level}</h2>
+                <h3 style="color: {risk_color};">Confidence Level: {prediction_prob:.1%}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Create visualizations
+            fig_gauge, fig_radar = create_risk_visualization(prediction_prob, student_data)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(fig_gauge, use_container_width=True)
+            with col2:
+                st.plotly_chart(fig_radar, use_container_width=True)
+            
+            # Display recommendations
+            st.markdown(f"""
+            <div class="results-section">
+                <h3 class="highlight-text">{get_text('personalized_intervention_recommendations', language)}</h3>
+                <img src="attached_assets/somalia-children-in-class_1751965339107.jpg" 
+                     style="width: 100%; height: 150px; object-fit: cover; border-radius: 15px; margin-bottom: 1rem;">
+            </div>
+            """, unsafe_allow_html=True)
+            display_recommendations(risk_level, student_data)
+            
+            # Enhanced summary table
+            st.markdown(f"""
+            <div class="results-section">
+                <h3 class="highlight-text">{get_text('assessment_summary', language)}</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            summary_data = {
+                "Assessment Area": ["Mathematics", "Reading", "Writing", "Attendance", "Behavior", "Literacy", "Overall Risk", "AI Confidence"],
+                "Score/Rating": [f"{student_data['math_score']}%", f"{student_data['reading_score']}%", f"{student_data['writing_score']}%", 
+                               f"{student_data['attendance']}%", f"{student_data['behavior']}/5", f"{student_data['literacy']}/10", 
+                               risk_level, f"{prediction_prob:.1%}"]
+            }
+            st.table(pd.DataFrame(summary_data))
+            
+            # Save prediction option
+            if save_button or st.button(" Save This Prediction"):
+                prediction_record = {
+                    "timestamp": datetime.now().isoformat(),
+                    "student_name": student_name,
+                    "grade_level": grade_level,
+                    "prediction": prediction,
+                    "probability": prediction_prob,
+                    "risk_level": risk_level,
+                    "notes": notes,
+                    **student_data
+                }
+                save_prediction_data(prediction_record)
+                st.success(" Prediction saved successfully!")
+    
+    elif prediction_type == "Batch Upload":
+        if uploaded_file is not None:
+            try:
+                df = pd.read_csv(uploaded_file)
+                st.success(f" Uploaded file with {len(df)} students")
+                
+                # Validate required columns
+                required_columns = ['math_score', 'reading_score', 'writing_score', 'attendance', 'behavior', 'literacy']
+                missing_columns = [col for col in required_columns if col not in df.columns]
+                
+                if missing_columns:
+                    st.error(f" Missing required columns: {', '.join(missing_columns)}")
+                else:
+                    # Show preview
+                    st.markdown("### Data Preview")
+                    st.dataframe(df.head())
+                    
+                    if st.button("Process Batch Predictions"):
+                        progress_bar = st.progress(0)
+                        results = []
+                        
+                        for idx, row in df.iterrows():
+                            try:
+                                student_data = {col: row[col] for col in required_columns}
+                                prediction, prediction_prob = make_prediction(student_data)
+                                
+                                if prediction_prob < 0.3:
+                                    risk_level = "Low Risk"
+                                elif prediction_prob < 0.7:
+                                    risk_level = "Medium Risk"
+                                else:
+                                    risk_level = "High Risk"
+                                
+                                results.append({
+                                    'Student_ID': idx + 1,
+                                    'Risk_Level': risk_level,
+                                    'Risk_Probability': f"{prediction_prob:.1%}",
+                                    **student_data
+                                })
+                                
+                                progress_bar.progress((idx + 1) / len(df))
+                            
+                            except Exception as e:
+                                st.error(f"Error processing student {idx + 1}: {str(e)}")
+                        
+                        # Display results
+                        results_df = pd.DataFrame(results)
+                        st.markdown("### Batch Prediction Results")
+                        st.dataframe(results_df)
+                        
+                        # Summary statistics
+                        risk_counts = results_df['Risk_Level'].value_counts()
+                        fig_pie = px.pie(values=risk_counts.values, names=risk_counts.index, 
+                                        title="Risk Level Distribution")
+                        st.plotly_chart(fig_pie, use_container_width=True)
+                        
+                        # Download results
+                        csv = results_df.to_csv(index=False)
+                        st.download_button(
+                            label="📥 Download Results",
+                            data=csv,
+                            file_name=f"learning_risk_predictions_{datetime.now().strftime('%Y%m%d')}.csv",
+                            mime="text/csv"
+                        )
+            
+            except Exception as e:
+                st.error(f" Error reading file: {str(e)}")
+        else:
+            st.info("Please upload a CSV file to begin batch processing")
+    
+    else:  # Historical Analysis
+        st.markdown("###  Historical Analysis")
+        historical_data = load_student_data()
+        
+        if historical_data:
+            df_historical = pd.DataFrame(historical_data)
+            
+            # Convert timestamp to datetime
+            df_historical['timestamp'] = pd.to_datetime(df_historical['timestamp'])
+            
+            # Analysis options
+            analysis_type = st.selectbox(
+                "Select analysis type:",
+                ["Risk Trends Over Time", "Performance Correlation", "Student Progress Tracking"]
+            )
+            
+            if analysis_type == "Risk Trends Over Time":
+                # Group by date and risk level
+                daily_risks = df_historical.groupby([df_historical['timestamp'].dt.date, 'risk_level']).size().unstack(fill_value=0)
+                
+                fig_trend = px.line(daily_risks, title="Risk Level Trends Over Time")
+                st.plotly_chart(fig_trend, use_container_width=True)
+            
+            elif analysis_type == "Performance Correlation":
+                # Correlation matrix
+                numeric_cols = ['math_score', 'reading_score', 'writing_score', 'attendance', 'behavior', 'literacy', 'probability']
+                if all(col in df_historical.columns for col in numeric_cols):
+                    corr_matrix = df_historical[numeric_cols].corr()
+                    fig_heatmap = px.imshow(corr_matrix, text_auto=True, title="Performance Correlation Matrix")
+                    st.plotly_chart(fig_heatmap, use_container_width=True)
+            
+            elif analysis_type == "Student Progress Tracking":
+                if 'student_name' in df_historical.columns:
+                    student_names = df_historical['student_name'].dropna().unique()
+                    selected_student = st.selectbox("Select student:", student_names)
+                    
+                    if selected_student:
+                        student_progress = df_historical[df_historical['student_name'] == selected_student].sort_values('timestamp')
+                        
+                        if len(student_progress) > 1:
+                            fig_progress = px.line(student_progress, x='timestamp', y='probability', 
+                                                 title=f"Risk Probability Trend for {selected_student}")
+                            st.plotly_chart(fig_progress, use_container_width=True)
+                        else:
+                            st.info("Not enough data points for trend analysis")
+        else:
+            st.info("No historical data available. Make some predictions first!")
+
+    # Footer with tips
+    st.markdown("---")
+    st.markdown("""
+    ### 💡 Tips for Accurate Predictions
+    - **Regular Updates**: Update student data regularly for more accurate tracking
+    - **Multiple Indicators**: Consider all factors, not just academic scores
+    - **Context Matters**: Add relevant notes about external factors
+    - **Follow-up**: Use predictions as starting points for deeper assessment
+    """)
+
+if __name__ == "__main__":
+    main()
+import streamlit as st
+import pandas as pd
+import json
+from datetime import datetime
+import random
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.image_utils import get_image_html, create_image_gallery, get_student_images
+from utils.educational_images import get_diverse_educational_images
+from utils.image_base64 import get_base64_images, get_image_html as get_b64_image_html
+from utils.language_utils import get_text, load_app_settings
+
+# Initialize language in session state
+if 'app_language' not in st.session_state:
+    settings = load_app_settings()
+    st.session_state['app_language'] = settings.get('language', 'English')
+
+# Get current language
+language = st.session_state.get('app_language', 'English')
+
+st.set_page_config(
+    page_title=f"{get_text('teacher_resources', language)} - EduScan", 
+    page_icon="⭕",
+    layout="wide"
+)
+
+# CSS matching the main app design
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    .stApp {
+        font-family: 'Poppins', sans-serif !important;
+        background: linear-gradient(rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0.95)), 
+                    url('data:image/jpeg;base64,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');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    .stDeployButton {display: none;}
+    #MainMenu {visibility: hidden;}
+    .stHeader {display: none;}
+    .stToolbar {display: none;}
+    
+    .css-1d391kg {
+        background-color: white !important;
+        border-right: 1px solid #e5e7eb !important;
+    }
+    
+    .main .block-container {
+        background-color: #f8fafc !important;
+        padding: 1.5rem !important;
+        max-width: none !important;
+    }
+    
+    .page-header {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .resource-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+    }
+    
+    .resource-title {
+        color: #1f2937;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .teacher-header {
+        background: linear-gradient(135deg, #00A86B 0%, #32CD32 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .teacher-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('attached_assets/Exam-Students_1750847086459.jpg
+        opacity: 0.1;
+        z-index: 0;
+    }
+    
+    .teacher-header > * {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .resource-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        margin: 1rem 0;
+    }
+    
+    .strategy-card {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid #00A86B;
+    }
+    
+    .teacher-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .teacher-card {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .teacher-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .teacher-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .highlight-text {
+        background: linear-gradient(135deg, #00A86B, #32CD32);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def generate_activity(difficulty_type, grade_level):
+    """Generate a random educational activity based on difficulty type and grade level"""
+    
+    activities = {
+        "reading": {
+            "K-2": [
+                "Picture book discussion with visual cues",
+                "Letter sound matching games",
+                "Simple word building with letter tiles",
+                "Reading comprehension with picture support",
+                "Phonics songs and rhyming activities"
+            ],
+            "3-5": [
+                "Graphic organizer for story elements",
+                "Vocabulary word maps with illustrations",
+                "Partner reading with guided questions",
+                "Reading response journals with prompts",
+                "Text-to-self connection activities"
+            ],
+            "6-8": [
+                "Literature circles with differentiated roles",
+                "Character analysis using graphic organizers",
+                "Compare and contrast essays with templates",
+                "Research projects with structured guidelines",
+                "Reading strategy instruction (summarizing, questioning)"
+            ]
+        },
+        "math": {
+            "K-2": [
+                "Hands-on counting with manipulatives",
+                "Visual number line activities",
+                "Shape recognition through real-world objects",
+                "Simple addition/subtraction with pictures",
+                "Math story problems with visual supports"
+            ],
+            "3-5": [
+                "Fraction circles and visual representations",
+                "Word problem solving with step-by-step guides",
+                "Math journals for problem-solving strategies",
+                "Multiplication games with visual arrays",
+                "Real-world math applications (cooking, shopping)"
+            ],
+            "6-8": [
+                "Algebra tiles for equation solving",
+                "Geometric constructions with technology",
+                "Data analysis projects with real data",
+                "Mathematical modeling activities",
+                "Peer tutoring for complex problem solving"
+            ]
+        },
+        "writing": {
+            "K-2": [
+                "Picture prompts for creative writing",
+                "Sentence frames for structured writing",
+                "Interactive writing with teacher support",
+                "Story sequencing activities",
+                "Simple poetry with repetitive patterns"
+            ],
+            "3-5": [
+                "Graphic organizers for essay planning",
+                "Peer editing with specific checklists",
+                "Multi-step writing process instruction",
+                "Genre studies with mentor texts",
+                "Writing conferences with guided feedback"
+            ],
+            "6-8": [
+                "Research paper scaffolding with templates",
+                "Argumentative writing with evidence support",
+                "Creative writing workshops",
+                "Digital storytelling projects",
+                "Collaborative writing assignments"
+            ]
+        },
+        "behavior": {
+            "All": [
+                "Positive behavior reinforcement system",
+                "Clear classroom expectations with visual reminders",
+                "Break cards for self-regulation",
+                "Mindfulness and breathing exercises",
+                "Social skills practice through role-play",
+                "Sensory break activities",
+                "Peer mentoring programs",
+                "Goal-setting and progress tracking",
+                "Conflict resolution strategies",
+                "Emotional regulation techniques"
+            ]
+        }
+    }
+    
+    if difficulty_type == "behavior":
+        return random.choice(activities[difficulty_type]["All"])
+    else:
+        grade_group = "K-2" if grade_level in ["K", "1", "2"] else "3-5" if grade_level in ["3", "4", "5"] else "6-8"
+        return random.choice(activities[difficulty_type].get(grade_group, activities[difficulty_type]["3-5"]))
+
+def main():
+    # Add CSS styling to match main app
+    st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        .stApp {
+            font-family: 'Poppins', sans-serif !important;
+            background-color: #f8fafc !important;
+        }
+        
+        .stDeployButton {display: none;}
+        #MainMenu {visibility: hidden;}
+        .stHeader {display: none;}
+        .stToolbar {display: none;}
+        
+        .css-1d391kg {
+            background-color: white !important;
+            border-right: 1px solid #e5e7eb !important;
+        }
+        
+        .main .block-container {
+            background-color: #f8fafc !important;
+            padding: 1.5rem !important;
+            max-width: none !important;
+        }
+        
+        .page-header {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            margin: -1.5rem -1.5rem 2rem -1.5rem;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+        
+        .resource-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+        }
+        
+        .resource-title {
+            color: #1f2937;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Page header
+    st.markdown(f"""
+    <div class="page-header">
+        <h1 class="page-title">{get_text('teacher_resources', language)}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Dashboard header
+    st.markdown(f"""
+    <div class="dashboard-header">
+        <h1 class="page-title">{get_text('teacher_resources', language)}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Enhanced header for teacher resources
+    st.markdown(f"""
+    <div class="teacher-header">
+        <h1>{get_text('excellence_in_education', language)}</h1>
+        <h2>{get_text('empowering_teachers', language)}</h2>
+        <p style="font-size: 1.2em; opacity: 0.9;">
+            {get_text('professional_development', language)}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Teacher showcase section with base64 images
+    b64_images = get_base64_images()
+    
+    st.markdown(f"""
+    <div class="resource-section">
+        <h2 class="highlight-text">{get_text('supporting_every_teacher', language)}</h2>
+        <div class="teacher-showcase">
+            <div class="teacher-card">
+                {get_b64_image_html(b64_images['inclusive_classroom_2'], "Inclusive classroom", "100%", "150px")}
+                <h4>{get_text('inclusive_classroom_excellence', language)}</h4>
+                <p>{get_text('create_learning_environments', language)}</p>
+            </div>
+            <div class="teacher-card">
+                {get_b64_image_html(b64_images['professional_collaboration'], "Teacher collaboration", "100%", "150px")}
+                <h4>{get_text('professional_collaboration', language)}</h4>
+                <p>{get_text('build_strong_partnerships', language)}</p>
+            </div>
+            <div class="teacher-card">
+                {get_b64_image_html(b64_images['engaging_strategies'], "Student engagement", "100%", "150px")}
+                <h4>{get_text('engaging_learning_strategies', language)}</h4>
+                <p>{get_text('implement_culturally_responsive', language)}</p>
+            </div>
+            <div class="teacher-card">
+                {get_b64_image_html(b64_images['assessment_innovation'], "Assessment strategies", "100%", "150px")}
+                <h4>{get_text('assessment_innovation', language)}</h4>
+                <p>{get_text('use_multiple_assessment', language)}</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add authentic teaching images
+    st.markdown(f"### {get_text('teaching_excellence_showcase', language)}")
+    images = get_student_images()
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(get_image_html(images['exam_students'], "Classroom Excellence", "100%", "150px"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(get_image_html(images['happy_students'], "Student Engagement", "100%", "150px"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(get_image_html(images['focused_student'], "Learning Focus", "100%", "150px"), unsafe_allow_html=True)
+    with col4:
+        st.markdown(get_image_html(images['student_portrait'], "Academic Growth", "100%", "150px"), unsafe_allow_html=True)
+    
+    # Sidebar navigation
+    with st.sidebar:
+        st.markdown(f"### {get_text('resource_categories', language)}")
+        resource_type = st.selectbox(
+            get_text('choose_resource_type', language),
+            [
+                get_text('differentiated_learning_strategies', language),
+                get_text('inclusive_classroom_tips', language), 
+                get_text('intervention_techniques', language),
+                get_text('assessment_strategies', language),
+                get_text('activity_generator', language),
+                get_text('professional_development', language)
+            ]
+        )
+    
+    if resource_type == "Differentiated Learning Strategies":
+        st.markdown("## Differentiated Learning Strategies")
+        
+        tab1, tab2, tab3, tab4 = st.tabs(["Reading", "Mathematics", "Writing", "General Strategies"])
+        
+        with tab1:
+            st.markdown("""
+            ### Reading Differentiation Strategies
+            
+            #### **For Students with Reading Difficulties:**
+            
+            **Phonics and Decoding Support**
+            - Use multi-sensory phonics instruction (visual, auditory, kinesthetic)
+            - Implement systematic phonics programs with explicit instruction
+            - Provide word families and pattern recognition activities
+            - Use color-coding for different sound patterns
+            
+            **Reading Comprehension Support**
+            - Pre-teach vocabulary with visual supports
+            - Use graphic organizers for story elements
+            - Implement guided reading with leveled texts
+            - Provide audio books and text-to-speech technology
+            
+            **🎧 Assistive Technology**
+            - Text-to-speech software
+            - Digital highlighters and annotation tools
+            - Reading apps with built-in supports
+            - Voice recording for reading practice
+            """)
+            
+            with st.expander("List Reading Intervention Checklist"):
+                st.markdown("""
+                - [ ] Assess current reading level and specific difficulties
+                - [ ] Set realistic, measurable reading goals
+                - [ ] Provide daily phonics instruction (15-20 minutes)
+                - [ ] Use high-interest, low-level reading materials
+                - [ ] Implement peer reading partnerships
+                - [ ] Monitor progress weekly with running records
+                - [ ] Celebrate small victories and progress
+                """)
+        
+        with tab2:
+            st.markdown("""
+            ### Mathematics Differentiation Strategies
+            
+            #### **For Students with Math Difficulties:**
+            
+            **Conceptual Understanding**
+            - Use concrete manipulatives before abstract concepts
+            - Implement visual math strategies (number lines, charts)
+            - Break complex problems into smaller steps
+            - Use real-world connections and applications
+            
+            **Chart Problem-Solving Support**
+            - Provide step-by-step problem-solving templates
+            - Use graphic organizers for word problems
+            - Teach multiple solution strategies
+            - Allow extra processing time
+            
+            **🔧 Tools and Accommodations**
+            - Calculator use for appropriate tasks
+            - Graph paper for organization
+            - Visual fraction models
+            - Math fact reference sheets
+            """)
+            
+            with st.expander("Math Support Strategies"):
+                st.markdown("""
+                **Number Sense Building:**
+                - Daily number talks (5-10 minutes)
+                - Skip counting practice
+                - Number pattern recognition
+                - Estimation activities
+                
+                **Fact Fluency:**
+                - Timed practice with progress tracking
+                - Math fact games and apps
+                - Visual multiplication charts
+                - Strategic fact family instruction
+                """)
+        
+        with tab3:
+            st.markdown("""
+            ### Writing Differentiation Strategies
+            
+            #### **For Students with Writing Difficulties:**
+            
+            **Note Writing Process Support**
+            - Use graphic organizers for planning
+            - Provide sentence and paragraph frames
+            - Implement peer editing with specific guidelines
+            - Allow voice-to-text technology
+            
+            **🎨 Creative Expression**
+            - Offer choice in writing topics and formats
+            - Use visual prompts and story starters
+            - Implement interactive writing activities
+            - Encourage multimedia presentations
+            
+            **✏️ Mechanics and Conventions**
+            - Teach grammar in context
+            - Use editing checklists and rubrics
+            - Provide spelling support tools
+            - Focus on one writing skill at a time
+            """)
+        
+        with tab4:
+            st.markdown("""
+            ### Brain General Differentiation Strategies
+            
+            #### **Universal Design for Learning (UDL) Principles:**
+            
+            **Multiple Means of Representation**
+            - Present information in various formats (visual, auditory, hands-on)
+            - Use multimedia resources
+            - Provide background knowledge activation
+            - Offer multiple examples and non-examples
+            
+            **⚡ Multiple Means of Engagement**
+            - Offer choices in topics, tools, and learning environment
+            - Connect to student interests and cultural backgrounds
+            - Provide appropriate challenges for all learners
+            - Foster collaboration and community
+            
+            **🛠️ Multiple Means of Expression**
+            - Allow various ways to demonstrate knowledge
+            - Provide options for physical action and movement
+            - Support planning and strategy development
+            - Use assistive technologies as needed
+            """)
+    
+    elif resource_type == "Inclusive Classroom Tips":
+        st.markdown("##  Inclusive Classroom Environment")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            ### 🌈 Creating an Inclusive Environment
+            
+            **Physical Environment:**
+            -  Flexible seating options (standing desks, stability balls, quiet corners)
+            -  Clear visual schedules and expectations posted
+            -  Sensory-friendly spaces for breaks
+            -  Well-organized materials with visual labels
+            -  Adequate lighting and minimal distractions
+            
+            **Social Environment:**
+            -  Celebrate diverse learning styles and strengths
+            -  Teach empathy and understanding of differences
+            -  Implement peer support systems
+            -  Use person-first language
+            -  Foster a growth mindset culture
+            """)
+            
+            st.markdown("""
+            ### 🤝 Collaboration Strategies
+            
+            **With Special Education Teachers:**
+            - Regular co-planning sessions
+            - Shared responsibility for all students
+            - Consistent communication about student progress
+            - Joint problem-solving for challenges
+            
+            **With Parents/Families:**
+            - Regular communication about strategies that work
+            - Home-school consistency in approaches
+            - Shared goal setting
+            - Cultural responsiveness and sensitivity
+            """)
+        
+        with col2:
+            st.markdown("""
+            ### List Daily Inclusive Practices
+            
+            **Morning Routines:**
+            - Visual schedules for predictability
+            - Greeting choices (handshake, high-five, wave)
+            - Check-in systems for emotional regulation
+            - Preview of the day's activities
+            
+            **During Instruction:**
+            - Clear, concise directions with visual supports
+            - Frequent check-ins and feedback
+            - Movement breaks built into lessons
+            - Multiple ways to participate
+            
+            **Behavior Support:**
+            - Positive behavior intervention systems
+            - Clear expectations with visual reminders
+            - Teaching replacement behaviors
+            - Restorative justice approaches
+            """)
+            
+            with st.expander("Inclusive Teaching Checklist"):
+                st.markdown("""
+                **Daily Self-Check:**
+                - [ ] Did I provide multiple ways to access content today?
+                - [ ] Did I offer choices in how students demonstrated learning?
+                - [ ] Did I check in with students who need extra support?
+                - [ ] Did I celebrate diverse contributions and perspectives?
+                - [ ] Did I use clear, consistent language and expectations?
+                - [ ] Did I provide appropriate challenges for all learners?
+                """)
+    
+    elif resource_type == "Intervention Techniques":
+        st.markdown("## Evidence-Based Intervention Techniques")
+        
+        intervention_area = st.selectbox(
+            "Select intervention focus:",
+            ["Reading Interventions", "Math Interventions", "Behavioral Interventions", "Executive Function Support"]
+        )
+        
+        if intervention_area == "Reading Interventions":
+            st.markdown("""
+            ### Tier 2 & 3 Reading Interventions
+            
+            #### **Systematic Phonics Interventions**
+            - **Orton-Gillingham Approach**: Multi-sensory phonics instruction
+            - **Wilson Reading System**: Structured literacy program
+            - **REWARDS**: Reading strategies for older students
+            - **Duration**: 30-45 minutes daily, 12-16 weeks minimum
+            
+            #### **Fluency Interventions**
+            - **Repeated Reading**: Practice with the same text multiple times
+            - **Paired Reading**: Student and tutor read together
+            - **Reader's Theater**: Performance-based fluency practice
+            - **Goal**: Increase words per minute and expression
+            
+            #### **Comprehension Interventions**
+            - **Reciprocal Teaching**: Students take turns leading discussions
+            - **Graphic Organizers**: Visual supports for understanding
+            - **Question-Answer Relationships**: Teaching question types
+            - **Think-Alouds**: Modeling comprehension strategies
+            """)
+            
+            # Interactive intervention tracker
+            st.markdown("#### Chart Intervention Progress Tracker")
+            
+            with st.form("reading_intervention_form"):
+                student_name = st.text_input("Student Name")
+                intervention_type = st.selectbox("Intervention Type", 
+                    ["Phonics", "Fluency", "Comprehension", "Vocabulary"])
+                baseline_score = st.number_input("Baseline Score", min_value=0, max_value=100)
+                current_score = st.number_input("Current Score", min_value=0, max_value=100)
+                weeks_elapsed = st.number_input("Weeks of Intervention", min_value=1, max_value=52)
+                notes = st.text_area("Progress Notes")
+                
+                if st.form_submit_button("Track Progress"):
+                    progress = current_score - baseline_score
+                    rate = progress / weeks_elapsed if weeks_elapsed > 0 else 0
+                    
+                    st.success(f"Progress tracked for {student_name}")
+                    st.metric("Score Improvement", f"{progress} points", f"{rate:.1f} pts/week")
+        
+        elif intervention_area == "Math Interventions":
+            st.markdown("""
+            ### Intensive Math Interventions
+            
+            #### **Number Sense Interventions**
+            - **Number Worlds**: Comprehensive number sense program
+            - **TouchMath**: Multi-sensory approach to basic facts
+            - **Number Line Activities**: Visual representation of number relationships
+            - **Subitizing Practice**: Quick recognition of small quantities
+            
+            #### **Fact Fluency Interventions**
+            - **Math Facts in a Flash**: Systematic fact practice
+            - **Rocket Math**: Timed practice with progression
+            - **Computer-Based Programs**: Adaptive fact practice
+            - **Goal**: Automatic recall of basic facts
+            
+            #### **Problem-Solving Interventions**
+            - **Schema-Based Instruction**: Teaching problem types
+            - **Concrete-Representational-Abstract**: Gradual release model
+            - **Math Talk**: Verbalization of thinking processes
+            - **Error Analysis**: Learning from mistakes
+            """)
+        
+        elif intervention_area == "Behavioral Interventions":
+            st.markdown("""
+            ### Behavioral Support Interventions
+            
+            #### **Positive Behavior Interventions and Supports (PBIS)**
+            - **Tier 1**: Universal classroom management
+            - **Tier 2**: Targeted group interventions
+            - **Tier 3**: Intensive individual supports
+            - **Focus**: Prevention and positive reinforcement
+            
+            #### **Self-Regulation Strategies**
+            - **Zones of Regulation**: Emotional awareness and control
+            - **Mindfulness Practices**: Breathing and centering techniques
+            - **Break Cards**: Self-advocacy for regulation needs
+            - **Goal Setting**: Student-directed behavior goals
+            
+            #### **Social Skills Interventions**
+            - **Social Stories**: Narrative-based skill instruction
+            - **Role Playing**: Practice in safe environments
+            - **Peer Mediation**: Student-led conflict resolution
+            - **Circle Time**: Community building and problem-solving
+            """)
+        
+        else:  # Executive Function Support
+            st.markdown("""
+            ### Brain Executive Function Support
+            
+            #### **Organization Strategies**
+            - **Color-Coding Systems**: Different subjects, different colors
+            - **Checklists and Templates**: Step-by-step guidance
+            - **Digital Organization Tools**: Apps and platforms
+            - **Clean Desk Policy**: Minimize distractions
+            
+            #### **Time Management Support**
+            - **Visual Schedules**: Picture or text-based daily schedules
+            - **Timer Use**: Breaking tasks into manageable chunks
+            - **Transition Warnings**: 5-minute, 2-minute notices
+            - **Priority Ranking**: Teaching importance vs. urgency
+            
+            #### **Working Memory Support**
+            - **Chunking Information**: Breaking into smaller parts
+            - **Rehearsal Strategies**: Repetition and practice
+            - **External Memory Aids**: Notes, recordings, visuals
+            - **Reduce Cognitive Load**: Simplify instructions
+            """)
+    
+    elif resource_type == "Activity Generator":
+        st.markdown("## 🎮 Interactive Activity Generator")
+        st.markdown("Generate customized activities for students with learning difficulties")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            difficulty_type = st.selectbox(
+                "Select area of difficulty:",
+                ["reading", "math", "writing", "behavior"]
+            )
+            
+            grade_level = st.selectbox(
+                "Select grade level:",
+                ["K", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+            )
+        
+        with col2:
+            group_size = st.selectbox(
+                "Group size:",
+                ["Individual", "Small Group (2-4)", "Large Group (5+)", "Whole Class"]
+            )
+            
+            time_available = st.selectbox(
+                "Time available:",
+                ["5-10 minutes", "15-20 minutes", "30+ minutes", "Full lesson"]
+            )
+        
+        if st.button("Generate Activity", type="primary"):
+            activity = generate_activity(difficulty_type, grade_level)
+            
+            st.markdown("### Generated Activity")
+            st.info(f"**Activity**: {activity}")
+            
+            # Additional details based on selections
+            if difficulty_type == "reading":
+                materials = ["Leveled books", "Graphic organizers", "Vocabulary cards", "Audio recordings"]
+                objectives = ["Improve decoding skills", "Enhance comprehension", "Build vocabulary", "Increase fluency"]
+            elif difficulty_type == "math":
+                materials = ["Manipulatives", "Calculator", "Graph paper", "Visual aids"]
+                objectives = ["Build number sense", "Improve problem-solving", "Practice facts", "Understand concepts"]
+            elif difficulty_type == "writing":
+                materials = ["Graphic organizers", "Word banks", "Sentence frames", "Editing checklists"]
+                objectives = ["Improve organization", "Build vocabulary", "Practice mechanics", "Enhance creativity"]
+            else:  # behavior
+                materials = ["Visual cues", "Timer", "Reward system", "Calm down area"]
+                objectives = ["Self-regulation", "Social skills", "Focus attention", "Follow directions"]
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**List Materials Needed:**")
+                for material in materials[:3]:  # Show 3 relevant materials
+                    st.write(f"• {material}")
+            
+            with col2:
+                st.markdown("**Learning Objectives:**")
+                for objective in objectives[:3]:  # Show 3 relevant objectives
+                    st.write(f"• {objective}")
+            
+            # Adaptation suggestions
+            st.markdown("### 🔧 Adaptation Suggestions")
+            
+            adaptations = {
+                "Individual": "Provide one-on-one support and immediate feedback",
+                "Small Group (2-4)": "Encourage peer collaboration and shared learning",
+                "Large Group (5+)": "Use cooperative learning structures and clear roles",
+                "Whole Class": "Implement universal supports and multiple ways to participate"
+            }
+            
+            time_adaptations = {
+                "5-10 minutes": "Focus on one specific skill with quick practice",
+                "15-20 minutes": "Include instruction, practice, and brief reflection",
+                "30+ minutes": "Full lesson with modeling, guided practice, and independent work",
+                "Full lesson": "Complete learning cycle with assessment and extension"
+            }
+            
+            st.write(f"**Group Size Adaptation**: {adaptations[group_size]}")
+            st.write(f"**Time Adaptation**: {time_adaptations[time_available]}")
+    
+    elif resource_type == "Professional Development":
+        st.markdown("## Professional Learning Modules")
+        
+        module_type = st.selectbox(
+            "Choose learning module:",
+            [
+                "Understanding Learning Disabilities",
+                "Evidence-Based Practices",
+                "Assessment and Progress Monitoring",
+                "Family Engagement",
+                "Technology Integration"
+            ]
+        )
+        
+        if module_type == "Understanding Learning Disabilities":
+            st.markdown("""
+            ### Brain Understanding Learning Disabilities
+            
+            #### **Module Overview** (45 minutes)
+            Learn about different types of learning disabilities and their characteristics.
+            
+            #### **Learning Objectives**
+            By the end of this module, you will be able to:
+            - Identify characteristics of common learning disabilities
+            - Understand the neurological basis of learning differences
+            - Recognize signs of learning difficulties in the classroom
+            - Distinguish between learning disabilities and other factors
+            
+            #### **Content Sections**
+            1. **Definition and Legal Framework** (10 minutes)
+            2. **Types of Learning Disabilities** (15 minutes)
+            3. **Identification and Assessment** (10 minutes)
+            4. **Classroom Implications** (10 minutes)
+            """)
+            
+            with st.expander("Section 1: Definition and Legal Framework"):
+                st.markdown("""
+                **What are Learning Disabilities?**
+                
+                Learning disabilities are neurologically-based processing problems that can interfere with learning basic skills such as reading, writing, or math. They can also interfere with higher level skills such as organization, time planning, abstract reasoning, long or short term memory, and attention.
+                
+                **Key Characteristics:**
+                - Unexpected academic difficulty despite average or above-average intelligence
+                - Significant discrepancy between potential and performance
+                - Processing differences in specific areas
+                - Lifelong condition that affects learning across settings
+                
+                **Legal Protections:**
+                - Individuals with Disabilities Education Act (IDEA)
+                - Section 504 of the Rehabilitation Act
+                - Americans with Disabilities Act (ADA)
+                """)
+            
+            with st.expander("Section 2: Types of Learning Disabilities"):
+                st.markdown("""
+                **Specific Learning Disability Categories:**
+                
+                **1. Dyslexia (Reading)**
+                - Difficulty with accurate and/or fluent word recognition
+                - Poor spelling and decoding abilities
+                - Often results from deficit in phonological component of language
+                
+                **2. Dyscalculia (Mathematics)**
+                - Difficulty with number sense, number facts, and calculation
+                - Problems with mathematical reasoning
+                - Challenges with math concepts and problem-solving
+                
+                **3. Dysgraphia (Writing)**
+                - Difficulty with handwriting, spelling, and written expression
+                - Problems with fine motor skills affecting writing
+                - Challenges organizing thoughts on paper
+                
+                **4. Language Processing Disorders**
+                - Difficulty understanding and using spoken language
+                - Problems with listening comprehension
+                - Challenges with verbal expression
+                """)
+        
+        elif module_type == "Evidence-Based Practices":
+            st.markdown("""
+            ### Evidence-Based Practices for Learning Disabilities
+            
+            #### **High-Impact Instructional Strategies**
+            
+            **1. Explicit Instruction**
+            - Clear learning objectives
+            - Systematic skill progression
+            - Immediate feedback
+            - Multiple practice opportunities
+            
+            **2. Systematic Instruction**
+            - Logical sequence of skills
+            - Prerequisite skill development
+            - Cumulative review
+            - Mastery-based progression
+            
+            **3. Multi-sensory Instruction**
+            - Visual, auditory, and kinesthetic input
+            - Multiple pathways to learning
+            - Enhanced memory and retention
+            - Accommodates different learning styles
+            """)
+            
+            research_studies = pd.DataFrame({
+                "Practice": ["Explicit Instruction", "Peer Tutoring", "Graphic Organizers", "Self-Monitoring"],
+                "Effect Size": [0.82, 0.74, 0.68, 0.61],
+                "Grade Levels": ["K-12", "3-12", "3-12", "6-12"],
+                "Subject Areas": ["All", "Reading/Math", "All", "All"]
+            })
+            
+            st.markdown("#### Chart Research Evidence")
+            st.dataframe(research_studies)
+            st.caption("Effect sizes from meta-analyses of special education research")
+    
+    # Footer with quick links
+    st.markdown("---")
+    st.markdown("### 🔗 Quick Resources")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("Reading Strategies", use_container_width=True):
+            st.info("Comprehensive reading support strategies loaded above!")
+    
+    with col2:
+        if st.button("Math Support", use_container_width=True):
+            st.info("Mathematics intervention techniques displayed above!")
+    
+    with col3:
+        if st.button("Writing Help", use_container_width=True):
+            st.info("Writing differentiation strategies shown above!")
+    
+    with col4:
+        if st.button("Behavior Tips", use_container_width=True):
+            st.info("Behavioral intervention strategies provided above!")
+
+if __name__ == "__main__":
+    main()
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+from datetime import datetime, date, timedelta
+import json
+import os
+from utils.data_utils import save_parent_observation, load_parent_observations
+from utils.image_utils import get_image_html, create_image_gallery, get_student_images
+from utils.educational_images import get_diverse_educational_images
+from utils.image_base64 import get_base64_images, get_image_html as get_b64_image_html
+from utils.language_utils import get_text, load_app_settings
+
+# Initialize language in session state
+if 'app_language' not in st.session_state:
+    settings = load_app_settings()
+    st.session_state['app_language'] = settings.get('language', 'English')
+
+# Get current language
+language = st.session_state.get('app_language', 'English')
+
+st.set_page_config(
+    page_title=f"{get_text('parent_tracker', language)} - EduScan",
+    page_icon="⭕",
+    layout="wide"
+)
+
+# CSS matching the main app design
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    .stApp {
+        font-family: 'Poppins', sans-serif !important;
+        background: linear-gradient(rgba(248, 250, 252, 0.95), rgba(248, 250, 252, 0.95)), 
+                    url('data:image/jpeg;base64,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');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    .stDeployButton {display: none;}
+    #MainMenu {visibility: hidden;}
+    .stHeader {display: none;}
+    .stToolbar {display: none;}
+    
+    .css-1d391kg {
+        background-color: white !important;
+        border-right: 1px solid #e5e7eb !important;
+    }
+    
+    .main .block-container {
+        background-color: #f8fafc !important;
+        padding: 1.5rem !important;
+        max-width: none !important;
+    }
+    
+    .page-header {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .tracker-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+    }
+    
+    .parent-header {
+        background: linear-gradient(135deg, #E91E63 0%, #FF6B35 50%, #FFD23F 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .parent-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('attached_assets/Exam-Students_1750847086459.jpg
+        opacity: 0.1;
+        z-index: 0;
+    }
+    
+    .parent-header > * {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .family-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        margin: 1rem 0;
+    }
+    
+    .family-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .family-card {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .family-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .family-card img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .highlight-text {
+        background: linear-gradient(135deg, #E91E63, #FF6B35);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: bold;
+    }
+    
+    .tracking-form {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        margin: 1rem 0;
+        border-left: 4px solid #E91E63;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def create_progress_chart(data, metric):
+    """Create progress chart for specific metric"""
+    df = pd.DataFrame(data)
+    if df.empty:
+        return None
+    
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.sort_values('date')
+    
+    fig = px.line(df, x='date', y=metric, 
+                  title=f"{metric.replace('_', ' ').title()} Progress Over Time",
+                  markers=True)
+    
+    fig.update_layout(
+        xaxis_title="Date",
+        yaxis_title=metric.replace('_', ' ').title(),
+        height=400
+    )
+    
+    return fig
+
+def create_weekly_summary(data):
+    """Create weekly summary visualization"""
+    if not data:
+        return None, None
+    
+    df = pd.DataFrame(data)
+    df['date'] = pd.to_datetime(df['date'])
+    df['week'] = df['date'].dt.to_period('W')
+    
+    # Calculate weekly averages
+    weekly_avg = df.groupby('week')[['homework_completion', 'behavior_rating', 'sleep_hours', 'mood_rating']].mean()
+    
+    # Create summary chart
+    fig = go.Figure()
+    
+    metrics = ['homework_completion', 'behavior_rating', 'sleep_hours', 'mood_rating']
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+    
+    for i, metric in enumerate(metrics):
+        fig.add_trace(go.Scatter(
+            x=weekly_avg.index.astype(str),
+            y=weekly_avg[metric],
+            mode='lines+markers',
+            name=metric.replace('_', ' ').title(),
+            line=dict(color=colors[i])
+        ))
+    
+    fig.update_layout(
+        title="Weekly Progress Summary",
+        xaxis_title="Week",
+        yaxis_title="Score",
+        height=400
+    )
+    
+    return fig, weekly_avg
+
+def main():
+    # Page header
+    st.markdown(f"""
+    <div class="page-header">
+        <h1 class="page-title">{get_text('parent_tracker', language)}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add authentic student images
+    st.markdown(f"### {get_text('supporting_childs_learning', language)}")
+    images = get_student_images()
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(get_image_html(images['classroom_girls'], "Family Support", "100%", "200px"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(get_image_html(images['boys_in_classroom'], "Learning Growth", "100%", "200px"), unsafe_allow_html=True)
+    
+    # Family showcase section with base64 images
+    b64_images = get_base64_images()
+    
+    st.markdown(f"""
+    <div class="family-section">
+        <h2 class="highlight-text">{get_b64_image_html(b64_images['strengthening_connections'], "Strengthening Home-School Connections", "100%", "80px")}</h2>
+        <div class="family-showcase">
+            <div class="family-card">
+                {get_b64_image_html(b64_images['daily_tracking'], "Family learning", "100%", "150px")}
+                <h4>{get_text('daily_tracking', language)}</h4>
+                <p>{get_text('monitor_child_progress', language)}</p>
+            </div>
+            <div class="family-card">
+                {get_b64_image_html(b64_images['parent_empowerment'], "Parent support", "100%", "150px")}
+                <h4>{get_text('parent_empowerment', language)}</h4>
+                <p>{get_text('gain_insights_strategies', language)}</p>
+            </div>
+            <div class="family-card">
+                {get_b64_image_html(b64_images['school_partnership'], "Family collaboration", "100%", "150px")}
+                <h4>{get_text('school_partnership', language)}</h4>
+                <p>{get_text('build_communication_bridges', language)}</p>
+            </div>
+            <div class="family-card">
+                {get_b64_image_html(b64_images['student_progress_1'], "Student success", "100%", "150px")}
+                <h4>{get_text('student_success', language)}</h4>
+                <p>{get_text('celebrate_achievements', language)}</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add student progress gallery
+    st.markdown(f"### {get_text('student_progress_stories', language)}")
+    images = get_student_images()
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(get_image_html(images['teacher_with_students'], "Academic Progress", "100%", "170px"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(get_image_html(images['happy_young_students'], "Learning Joy", "100%", "170px"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(get_image_html(images['classroom_girls'], "Study Focus", "100%", "170px"), unsafe_allow_html=True)
+    
+    # Sidebar for child selection and navigation
+    with st.sidebar:
+        st.markdown(f"### {get_text('child_selection', language)}")
+        child_name = st.text_input(get_text('child_name', language), placeholder="Enter child's name")
+        
+        if child_name:
+            st.success(f"{get_text('tracking', language)}: {child_name}")
+        
+        st.markdown(f"### {get_text('dashboard_options', language)}")
+        dashboard_view = st.selectbox(
+            get_text('choose_view', language),
+            [get_text('daily_entry', language), get_text('progress_tracking', language), get_text('weekly_summary', language), get_text('observations_log', language)]
+        )
+        
+        # Date range for analysis
+        if dashboard_view in ["Progress Tracking", "Weekly Summary"]:
+            st.markdown("### Date Range")
+            end_date = st.date_input("End Date", value=date.today())
+            start_date = st.date_input("Start Date", value=end_date - timedelta(days=30))
+
+    if not child_name:
+        st.warning(get_text('please_enter_child_name', language))
+        st.stop()
+
+    if dashboard_view == get_text('daily_entry', language):
+        st.markdown(f"## {get_text('daily_observation_entry', language)}")
+        st.markdown(f"{get_text('recording_observations_for', language)} **{child_name}** {get_text('on', language)} {date.today().strftime('%B %d, %Y')}")
+        
+        # Create form for daily entry
+        with st.form("daily_observation_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown(f"### {get_text('academic_observations', language)}")
+                
+                homework_completion = st.slider(
+                    "Homework Completion (%)", 
+                    0, 100, 75,
+                    help="Percentage of assigned homework completed"
+                )
+                
+                reading_time = st.number_input(
+                    "Reading Time (minutes)", 
+                    min_value=0, max_value=180, value=20,
+                    help="Minutes spent reading independently"
+                )
+                
+                focus_level = st.select_slider(
+                    "Focus During Homework",
+                    options=["Very Poor", "Poor", "Fair", "Good", "Excellent"],
+                    value="Good"
+                )
+                
+                subjects_struggled = st.multiselect(
+                    "Subjects with Difficulties",
+                    ["Math", "Reading", "Writing", "Science", "Social Studies", "Other"],
+                    help="Select subjects where child struggled today"
+                )
+            
+            with col2:
+                st.markdown(f"### {get_text('behavioral_emotional', language)}")
+                
+                behavior_rating = st.select_slider(
+                    "Overall Behavior", 
+                    options=["1 - Challenging", "2 - Below Average", "3 - Average", "4 - Good", "5 - Excellent"],
+                    value="3 - Average",
+                    help="Select your child's overall behavior today"
+                )
+                behavior_value = int(behavior_rating.split(' ')[0])  # Extract number for calculations
+                
+                mood_rating = st.select_slider(
+                    "Mood/Emotional State", 
+                    options=["1 - Very Upset", "2 - Upset", "3 - Neutral", "4 - Happy", "5 - Very Happy"],
+                    value="3 - Neutral",
+                    help="How was your child's mood today?"
+                )
+                mood_value = int(mood_rating.split(' ')[0])  # Extract number for calculations
+                
+                sleep_hours = st.number_input(
+                    "Hours of Sleep", 
+                    min_value=4.0, max_value=12.0, value=8.0, step=0.5,
+                    help="Total hours of sleep last night"
+                )
+                
+                energy_level = st.select_slider(
+                    "Energy Level",
+                    options=["Very Low", "Low", "Normal", "High", "Very High"],
+                    value="Normal"
+                )
+            
+            st.markdown("### List Additional Observations")
+            
+            col3, col4 = st.columns(2)
+            
+            with col3:
+                social_interactions = st.text_area(
+                    "Social Interactions",
+                    placeholder="How did your child interact with siblings, friends, or family today?",
+                    height=100
+                )
+                
+                learning_wins = st.text_area(
+                    "Learning Wins/Successes",
+                    placeholder="What went well today? Any breakthroughs or positive moments?",
+                    height=100
+                )
+            
+            with col4:
+                challenges_faced = st.text_area(
+                    "Challenges Faced",
+                    placeholder="What was difficult today? Any specific struggles or concerns?",
+                    height=100
+                )
+                
+                strategies_used = st.text_area(
+                    "Strategies That Helped",
+                    placeholder="What strategies or supports helped your child today?",
+                    height=100
+                )
+            
+            # Environmental factors
+            st.markdown("### Home Environmental Factors")
+            
+            col5, col6 = st.columns(2)
+            
+            with col5:
+                screen_time = st.number_input(
+                    "Screen Time (hours)", 
+                    min_value=0.0, max_value=12.0, value=2.0, step=0.5
+                )
+                
+                physical_activity = st.number_input(
+                    "Physical Activity (minutes)", 
+                    min_value=0, max_value=300, value=60
+                )
+            
+            with col6:
+                medication_taken = st.checkbox("Medication taken as prescribed")
+                
+                special_events = st.text_input(
+                    "Special Events/Changes",
+                    placeholder="Any unusual events, schedule changes, or disruptions?"
+                )
+            
+            # Submit button
+            submitted = st.form_submit_button(" Save Daily Observation", type="primary")
+            
+            if submitted:
+                # Prepare observation data
+                observation_data = {
+                    "child_name": child_name,
+                    "date": date.today().isoformat(),
+                    "homework_completion": homework_completion,
+                    "reading_time": reading_time,
+                    "focus_level": focus_level,
+                    "subjects_struggled": subjects_struggled,
+                    "behavior_rating": behavior_value,
+                    "mood_rating": mood_value,
+                    "sleep_hours": sleep_hours,
+                    "energy_level": energy_level,
+                    "social_interactions": social_interactions,
+                    "learning_wins": learning_wins,
+                    "challenges_faced": challenges_faced,
+                    "strategies_used": strategies_used,
+                    "screen_time": screen_time,
+                    "physical_activity": physical_activity,
+                    "medication_taken": medication_taken,
+                    "special_events": special_events,
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Save the observation
+                save_parent_observation(observation_data)
+                st.success(" Daily observation saved successfully!")
+                st.balloons()
+
+    elif dashboard_view == "Progress Tracking":
+        st.markdown("## Growth Progress Tracking")
+        st.markdown(f"Analyzing progress for **{child_name}** from {start_date} to {end_date}")
+        
+        # Load observations for the child
+        all_observations = load_parent_observations()
+        child_observations = [obs for obs in all_observations 
+                            if obs.get('child_name') == child_name 
+                            and start_date <= date.fromisoformat(obs['date']) <= end_date]
+        
+        if not child_observations:
+            st.warning("Chart No observations found for the selected date range. Start by adding daily observations!")
+            return
+        
+        # Create tabs for different metrics
+        tab1, tab2, tab3, tab4 = st.tabs(["Academic", "Behavioral", "Emotional", "Health"])
+        
+        with tab1:
+            st.markdown("### Academic Progress")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Homework completion chart
+                homework_fig = create_progress_chart(child_observations, 'homework_completion')
+                if homework_fig:
+                    st.plotly_chart(homework_fig, use_container_width=True)
+            
+            with col2:
+                # Reading time chart
+                reading_fig = create_progress_chart(child_observations, 'reading_time')
+                if reading_fig:
+                    st.plotly_chart(reading_fig, use_container_width=True)
+            
+            # Subject struggles analysis
+            st.markdown("#### Chart Subject Difficulty Analysis")
+            
+            all_subjects = []
+            for obs in child_observations:
+                all_subjects.extend(obs.get('subjects_struggled', []))
+            
+            if all_subjects:
+                subject_counts = pd.Series(all_subjects).value_counts()
+                fig_subjects = px.bar(x=subject_counts.index, y=subject_counts.values,
+                                    title="Subjects with Most Difficulties",
+                                    labels={'x': 'Subject', 'y': 'Number of Days'})
+                st.plotly_chart(fig_subjects, use_container_width=True)
+            else:
+                st.info("Great news! No subject difficulties recorded in this period.")
+        
+        with tab2:
+            st.markdown("### Behavioral Progress")
+            
+            behavior_fig = create_progress_chart(child_observations, 'behavior_rating')
+            if behavior_fig:
+                st.plotly_chart(behavior_fig, use_container_width=True)
+            
+            # Behavior statistics
+            df = pd.DataFrame(child_observations)
+            if not df.empty:
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    avg_behavior = df['behavior_rating'].mean()
+                    st.metric("Average Behavior Rating", f"{avg_behavior:.1f}/5")
+                
+                with col2:
+                    good_days = len(df[df['behavior_rating'] >= 4])
+                    st.metric("Good Behavior Days", f"{good_days}/{len(df)}")
+                
+                with col3:
+                    improvement = df['behavior_rating'].diff().mean()
+                    st.metric("Trend", f"{improvement:+.2f}", delta=f"{improvement:.2f}")
+        
+        with tab3:
+            st.markdown("### Emotional Well-being")
+            
+            mood_fig = create_progress_chart(child_observations, 'mood_rating')
+            if mood_fig:
+                st.plotly_chart(mood_fig, use_container_width=True)
+            
+            # Mood analysis
+            df = pd.DataFrame(child_observations)
+            if not df.empty:
+                mood_dist = df['mood_rating'].value_counts().sort_index()
+                fig_mood_dist = px.pie(values=mood_dist.values, names=[f"Mood {i}" for i in mood_dist.index],
+                                     title="Mood Distribution")
+                st.plotly_chart(fig_mood_dist, use_container_width=True)
+        
+        with tab4:
+            st.markdown("### Health & Lifestyle")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                sleep_fig = create_progress_chart(child_observations, 'sleep_hours')
+                if sleep_fig:
+                    st.plotly_chart(sleep_fig, use_container_width=True)
+            
+            with col2:
+                activity_fig = create_progress_chart(child_observations, 'physical_activity')
+                if activity_fig:
+                    st.plotly_chart(activity_fig, use_container_width=True)
+            
+            # Health summary
+            df = pd.DataFrame(child_observations)
+            if not df.empty:
+                st.markdown("#### Chart Health Summary")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    avg_sleep = df['sleep_hours'].mean()
+                    st.metric("Average Sleep", f"{avg_sleep:.1f} hrs")
+                
+                with col2:
+                    avg_activity = df['physical_activity'].mean()
+                    st.metric("Average Activity", f"{avg_activity:.0f} min")
+                
+                with col3:
+                    avg_screen = df['screen_time'].mean()
+                    st.metric("Average Screen Time", f"{avg_screen:.1f} hrs")
+                
+                with col4:
+                    med_compliance = df['medication_taken'].mean() * 100
+                    st.metric("Medication Compliance", f"{med_compliance:.0f}%")
+
+    elif dashboard_view == "Weekly Summary":
+        st.markdown("## Weekly Summary")
+        st.markdown(f"Weekly analysis for **{child_name}**")
+        
+        # Load observations
+        all_observations = load_parent_observations()
+        child_observations = [obs for obs in all_observations 
+                            if obs.get('child_name') == child_name 
+                            and start_date <= date.fromisoformat(obs['date']) <= end_date]
+        
+        if not child_observations:
+            st.warning("Chart No observations found for the selected date range.")
+            return
+        
+        # Create weekly summary chart
+        weekly_fig, weekly_data = create_weekly_summary(child_observations)
+        
+        if weekly_fig:
+            st.plotly_chart(weekly_fig, use_container_width=True)
+            
+            # Weekly insights
+            st.markdown("### 💡 Weekly Insights")
+            
+            if weekly_data is not None and not weekly_data.empty:
+                latest_week = weekly_data.iloc[-1]
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("#### This Week's Highlights")
+                    
+                    if latest_week['homework_completion'] >= 80:
+                        st.success(" Great homework completion!")
+                    elif latest_week['homework_completion'] >= 60:
+                        st.warning("️ Homework completion needs attention")
+                    else:
+                        st.error("Homework completion is concerning")
+                    
+                    if latest_week['behavior_rating'] >= 4:
+                        st.success(" Excellent behavior this week!")
+                    elif latest_week['behavior_rating'] >= 3:
+                        st.info("ℹ️ Good behavior overall")
+                    else:
+                        st.warning("️ Behavior needs support")
+                
+                with col2:
+                    st.markdown("#### Growth Areas of Growth")
+                    
+                    if len(weekly_data) > 1:
+                        prev_week = weekly_data.iloc[-2]
+                        
+                        homework_change = latest_week['homework_completion'] - prev_week['homework_completion']
+                        behavior_change = latest_week['behavior_rating'] - prev_week['behavior_rating']
+                        mood_change = latest_week['mood_rating'] - prev_week['mood_rating']
+                        
+                        if homework_change > 5:
+                            st.success("Homework completion improved!")
+                        if behavior_change > 0.2:
+                            st.success("Behavior rating improved!")
+                        if mood_change > 0.2:
+                            st.success("Mood has improved!")
+
+    else:  # Observations Log
+        st.markdown("## Observations Log")
+        st.markdown(f"Complete observation history for **{child_name}**")
+        
+        # Load all observations for the child
+        all_observations = load_parent_observations()
+        child_observations = [obs for obs in all_observations if obs.get('child_name') == child_name]
+        
+        if not child_observations:
+            st.warning("Note No observations recorded yet. Start by adding daily observations!")
+            return
+        
+        # Sort by date (newest first)
+        child_observations.sort(key=lambda x: x['date'], reverse=True)
+        
+        # Filter options
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            date_filter = st.date_input("Filter by date (optional)")
+        
+        with col2:
+            show_detailed = st.checkbox("Show detailed observations", value=False)
+        
+        # Display observations
+        for obs in child_observations[:20]:  # Show last 20 observations
+            obs_date = date.fromisoformat(obs['date'])
+            
+            if date_filter and obs_date != date_filter:
+                continue
+            
+            with st.expander(f"{obs_date.strftime('%B %d, %Y')} - Rating: {obs['behavior_rating']}/5"):
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.markdown("**Academic**")
+                    st.write(f"Homework: {obs['homework_completion']}%")
+                    st.write(f"Reading: {obs['reading_time']} min")
+                    st.write(f"Focus: {obs.get('focus_level', 'N/A')}")
+                    if obs.get('subjects_struggled'):
+                        st.write(f"Struggled with: {', '.join(obs['subjects_struggled'])}")
+                
+                with col2:
+                    st.markdown("**Behavioral**")
+                    st.write(f"Behavior: {obs['behavior_rating']}/5")
+                    st.write(f"Mood: {obs['mood_rating']}/5")
+                    st.write(f"Energy: {obs.get('energy_level', 'N/A')}")
+                
+                with col3:
+                    st.markdown("**Health**")
+                    st.write(f"Sleep: {obs['sleep_hours']} hrs")
+                    st.write(f"Activity: {obs['physical_activity']} min")
+                    st.write(f"Screen time: {obs['screen_time']} hrs")
+                
+                if show_detailed:
+                    if obs.get('learning_wins'):
+                        st.markdown("**Learning Wins:**")
+                        st.write(obs['learning_wins'])
+                    
+                    if obs.get('challenges_faced'):
+                        st.markdown("**Challenges:**")
+                        st.write(obs['challenges_faced'])
+                    
+                    if obs.get('strategies_used'):
+                        st.markdown("**🛠️ Helpful Strategies:**")
+                        st.write(obs['strategies_used'])
+                    
+                    if obs.get('social_interactions'):
+                        st.markdown("**Group Social Interactions:**")
+                        st.write(obs['social_interactions'])
+        
+        # Export option
+        if st.button("📥 Export Observations"):
+            df_export = pd.DataFrame(child_observations)
+            csv = df_export.to_csv(index=False)
+            st.download_button(
+                label="Download CSV",
+                data=csv,
+                file_name=f"{child_name}_observations_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+
+    # Footer with tips
+    st.markdown("---")
+    st.markdown("### 💡 Parent Tracking Tips")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        **Effective Tracking:**
+        - Record observations consistently each day
+        - Be specific about challenges and successes
+        - Note what strategies work best
+        - Track patterns over time, not just individual days
+        """)
+    
+    with col2:
+        st.markdown("""
+        **📞 When to Seek Help:**
+        - Consistent low behavior/mood ratings
+        - Persistent homework struggles
+        - Sleep or health concerns
+        - Significant changes in patterns
+        """)
+
+if __name__ == "__main__":
+    main()
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.image_utils import get_image_html, create_image_gallery, get_student_images
+from utils.educational_images import get_diverse_educational_images
+from utils.image_base64 import get_base64_images, get_image_html as get_b64_image_html
+from utils.language_utils import get_text, load_app_settings
+
+# Initialize language in session state
+if 'app_language' not in st.session_state:
+    settings = load_app_settings()
+    st.session_state['app_language'] = settings.get('language', 'English')
+
+# Get current language
+language = st.session_state.get('app_language', 'English')
+
+st.set_page_config(
+    page_title=f"{get_text('educational_content', language)} - EduScan",
+    page_icon="⭕",
+    layout="wide"
+)
+
+# CSS matching the main app design
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+
+    
+    .stDeployButton {display: none;}
+    #MainMenu {visibility: hidden;}
+    .stHeader {display: none;}
+    .stToolbar {display: none;}
+    
+    .css-1d391kg {
+        background-color: white !important;
+        border-right: 1px solid #e5e7eb !important;
+    }
+    
+    .main .block-container {
+        background-color: #f8fafc !important;
+        padding: 1.5rem !important;
+        max-width: none !important;
+    }
+    
+    .page-header {
+        background: white;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    
+    .content-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+    }
+    
+    .education-header {
+        background: linear-gradient(135deg, #8E44AD 0%, #3498DB 50%, #1ABC9C 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .education-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('attached_assets/Exam-Students_1750847086459.jpg
+        opacity: 0.1;
+        z-index: 0;
+    }
+    
+    .education-header > * {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .content-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.18);
+        margin: 1rem 0;
+    }
+    
+    .research-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .research-card {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        border-left: 4px solid #8E44AD;
+    }
+    
+    .research-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .research-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .highlight-text {
+        background: linear-gradient(135deg, #8E44AD, #3498DB);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: bold;
+    }
+    
+    .statistics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .stat-highlight {
+        background: linear-gradient(135deg, #8E44AD20, #3498DB20);
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 2px solid #8E44AD30;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+def main():
+    # Page header
+    st.markdown(f"""
+    <div class="page-header">
+        <h1 class="page-title">{get_text('educational_content', language)}</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add authentic educational images
+    st.markdown(f"### {get_text('educational_excellence_in_action', language)}")
+    images = get_student_images()
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(get_image_html(images['happy_young_students'], "Research Excellence", "100%", "200px"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(get_image_html(images['teacher_with_students'], "Academic Focus", "100%", "200px"), unsafe_allow_html=True)
+    
+    # Research showcase section with base64 images
+    b64_images = get_base64_images()
+    
+    st.markdown(f"""
+    <div class="content-section">
+        <h2 class="highlight-text">{get_text('building_educational_excellence', language)}</h2>
+        <div class="research-showcase">
+            <div class="research-card">
+                {get_b64_image_html(b64_images['global_practices'], "Educational research", "100%", "150px")}
+                <h4>{get_text('global_best_practices', language)}</h4>
+                <p>{get_text('international_standards', language)}</p>
+            </div>
+            <div class="research-card">
+                {get_b64_image_html(b64_images['learning_science'], "Learning research", "100%", "150px")}
+                <h4>{get_text('learning_science', language)}</h4>
+                <p>{get_text('neuroscience_cognitive_research', language)}</p>
+            </div>
+            <div class="research-card">
+                {get_b64_image_html(b64_images['intervention_studies'], "Intervention studies", "100%", "150px")}
+                <h4>{get_text('intervention_studies', language)}</h4>
+                <p>{get_text('evidence_based_strategies', language)}</p>
+            </div>
+            <div class="research-card">
+                {get_b64_image_html(b64_images['cultural_adaptation'], "Cultural education", "100%", "150px")}
+                <h4>{get_text('cultural_adaptation', language)}</h4>
+                <p>{get_text('implementing_inclusive_education', language)}</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Add comprehensive student gallery
+    st.markdown(f"### {get_text('educational_research_impact', language)}")
+    images = get_student_images()
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(get_image_html(images['boys_in_classroom'], "Research Impact", "100%", "150px"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(get_image_html(images['classroom_girls'], "Student Success", "100%", "150px"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(get_image_html(images['happy_young_students'], "Learning Focus", "100%", "150px"), unsafe_allow_html=True)
+    with col4:
+        st.markdown(get_image_html(images['teacher_with_students'], "Educational Achievement", "100%", "150px"), unsafe_allow_html=True)
+    
+    # Sidebar navigation
+    with st.sidebar:
+        st.markdown(f"### {get_text('content_categories', language)}")
+        content_type = st.selectbox(
+            get_text('choose_content_type', language),
+            [
+                get_text('research_overview', language),
+                get_text('types_learning_difficulties', language), 
+                get_text('early_intervention', language),
+                get_text('academic_resources', language),
+                get_text('technology_tools', language),
+                get_text('support_strategies', language)
+            ]
+        )
+        
+        st.markdown(f"### {get_text('target_audience', language)}")
+        audience = st.selectbox(
+            get_text('content_for', language),
+            [get_text('teachers', language), get_text('parents', language), get_text('administrators', language), get_text('all', language)]
+        )
+
+    if content_type == get_text('research_overview', language):
+        st.markdown(f"## {get_text('research_overview', language)}: {get_text('types_learning_difficulties', language)}")
+        
+        tab1, tab2, tab3 = st.tabs([get_text('statistics', language), get_text('neuroscience', language), get_text('impact_studies', language)])
+        
+        with tab1:
+            st.markdown(f"### {get_text('learning_difficulties_statistics', language)}")
+            
+            # Create statistical visualizations
+            prevalence_data = {
+                "Type": ["Dyslexia", "ADHD", "Dyscalculia", "Dysgraphia", "Language Disorders", "Other"],
+                "Prevalence (%)": [5.0, 11.0, 3.5, 4.0, 7.0, 2.5],
+                "Description": [
+                    "Reading and language processing difficulties",
+                    "Attention deficit hyperactivity disorder", 
+                    "Mathematical learning difficulties",
+                    "Writing and fine motor difficulties",
+                    "Spoken language comprehension issues",
+                    "Other specific learning disabilities"
+                ]
+            }
+            
+            fig_prevalence = px.pie(
+                prevalence_data, 
+                values="Prevalence (%)", 
+                names="Type",
+                title="Prevalence of Learning Difficulties in School-Age Children"
+            )
+            st.plotly_chart(fig_prevalence, use_container_width=True)
+            
+            # Statistics table
+            st.markdown("#### Detailed Statistics")
+            stats_df = pd.DataFrame(prevalence_data)
+            st.dataframe(stats_df, use_container_width=True)
+            
+            # Key statistics
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Students Affected", "15-20%", "of all students")
+            
+            with col2:
+                st.metric("Early Identification", "< 30%", "before age 8")
+            
+            with col3:
+                st.metric("Gender Ratio", "2:1", "Male to Female")
+            
+            with col4:
+                st.metric("Improvement Rate", "80%", "with intervention")
+        
+        with tab2:
+            st.markdown("### Brain Neuroscience of Learning Difficulties")
+            
+            st.markdown("""
+            #### **Brain-Based Understanding**
+            
+            Learning difficulties are neurobiological in origin, involving differences in brain structure and function:
+            
+            **Key Brain Areas Affected:**
+            
+            **1. Left Hemisphere Language Areas**
+            - Broca's Area: Speech production and grammar
+            - Wernicke's Area: Language comprehension
+            - Angular Gyrus: Word recognition and reading
+            
+            **2. Phonological Processing Networks**
+            - Difficulty connecting sounds to letters
+            - Reduced activation in reading circuits
+            - Compensatory right hemisphere activation
+            
+            **3. Working Memory Systems**
+            - Prefrontal cortex involvement
+            - Information processing speed
+            - Attention and executive function
+            """)
+            
+            st.markdown("""
+            #### **Neuroplasticity and Intervention**
+            
+            **🌟 The Brain's Ability to Change:**
+            - Intensive intervention can create new neural pathways
+            - Earlier intervention leads to greater plasticity
+            - Multi-sensory approaches enhance brain connectivity
+            - Practice strengthens neural networks
+            
+            **Research Evidence:**
+            - fMRI studies show brain changes after intervention
+            - Increased activation in reading networks
+            - Improved connectivity between brain regions
+            - Long-term structural brain changes possible
+            """)
+            
+            # Intervention timeline
+            st.markdown("#### ⏰ Critical Intervention Periods")
+            
+            timeline_data = {
+                "Age Range": ["3-5 years", "6-8 years", "9-12 years", "13+ years"],
+                "Brain Plasticity": ["Highest", "High", "Moderate", "Lower"],
+                "Intervention Impact": ["Maximum", "High", "Moderate", "Requires intensity"],
+                "Key Focus": [
+                    "Language development, phonological awareness",
+                    "Reading foundation, basic skills",
+                    "Reading fluency, comprehension",
+                    "Compensation strategies, technology"
+                ]
+            }
+            
+            timeline_df = pd.DataFrame(timeline_data)
+            st.dataframe(timeline_df, use_container_width=True)
+        
+        with tab3:
+            st.markdown("### Growth Impact and Intervention Studies")
+            
+            st.markdown("""
+            #### **Major Research Findings**
+            
+            **National Reading Panel (2000)**
+            - Systematic phonics instruction is essential
+            - Phonemic awareness training improves reading
+            - Guided oral reading builds fluency
+            - Vocabulary instruction enhances comprehension
+            
+            **Meta-Analysis Studies**
+            - Intensive intervention shows large effect sizes (0.8+)
+            - Early intervention prevents reading failure
+            - Multi-component approaches most effective
+            - Technology tools can enhance traditional methods
+            """)
+            
+            # Create intervention effectiveness chart
+            intervention_data = {
+                "Intervention Type": [
+                    "Phonics Instruction",
+                    "Reading Fluency",
+                    "Comprehension Strategies", 
+                    "Vocabulary Training",
+                    "Multi-sensory Approaches",
+                    "Technology-Assisted"
+                ],
+                "Effect Size": [0.86, 0.71, 0.68, 0.62, 0.75, 0.58],
+                "Grade Levels": ["K-3", "2-5", "3-8", "K-8", "K-8", "K-12"]
+            }
+            
+            fig_effectiveness = px.bar(
+                intervention_data,
+                x="Effect Size",
+                y="Intervention Type",
+                orientation='h',
+                title="Intervention Effectiveness (Effect Sizes from Research)"
+            )
+            st.plotly_chart(fig_effectiveness, use_container_width=True)
+            
+            st.markdown("""
+            #### **Longitudinal Study Results**
+            
+            **Connecticut Longitudinal Study (Shaywitz et al.)**
+            - Followed 445 children from kindergarten to grade 12
+            - Reading difficulties persist without intervention
+            - Early identification and intervention crucial
+            - Brain imaging shows intervention changes neural pathways
+            
+            **Chart Key Outcomes:**
+            - 74% of poor readers in grade 3 remain poor readers in grade 9
+            - Intensive intervention can normalize reading performance
+            - Academic and social benefits extend beyond reading
+            - Self-esteem and motivation significantly improve
+            """)
+
+    elif content_type == "Types of Learning Difficulties":
+        st.markdown("## 🧩 Types of Learning Difficulties")
+        
+        difficulty_type = st.selectbox(
+            "Select learning difficulty:",
+            ["Dyslexia", "Dyscalculia", "Dysgraphia", "ADHD", "Language Processing", "Executive Function"]
+        )
+        
+        if difficulty_type == "Dyslexia":
+            st.markdown("""
+            ### Dyslexia: Reading and Language Processing
+            
+            #### **Definition and Characteristics**
+            Dyslexia is a neurobiological condition affecting reading and language processing despite adequate intelligence and instruction.
+            
+            **Core Characteristics:**
+            - Difficulty with accurate and/or fluent word recognition
+            - Poor spelling and decoding abilities
+            - Challenges with phonological processing
+            - Reading comprehension may be affected
+            
+            ** Observable Signs by Age:**
+            """)
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown("""
+                **Ages 3-5:**
+                - Delayed speech development
+                - Difficulty rhyming
+                - Problems learning alphabet
+                - Trouble following directions
+                """)
+            
+            with col2:
+                st.markdown("""
+                **Ages 6-8:**
+                - Slow reading progress
+                - Difficulty sounding out words
+                - Confusing similar words
+                - Avoiding reading activities
+                """)
+            
+            with col3:
+                st.markdown("""
+                **Ages 9+:**
+                - Reading below grade level
+                - Difficulty with comprehension
+                - Poor spelling despite instruction
+                - Avoiding written work
+                """)
+            
+            st.markdown("""
+            #### **Brain Neurological Basis**
+            - Differences in left hemisphere language areas
+            - Reduced connectivity in reading networks
+            - Phonological processing deficits
+            - Working memory challenges
+            
+            #### **Effective Interventions**
+            - Systematic, explicit phonics instruction
+            - Multi-sensory reading programs (Orton-Gillingham, Wilson)
+            - Structured literacy approaches
+            - Assistive technology support
+            """)
+        
+        elif difficulty_type == "Dyscalculia":
+            st.markdown("""
+            ### Dyscalculia: Mathematical Learning Difficulties
+            
+            #### **Definition and Characteristics**
+            Dyscalculia is a specific learning difficulty affecting mathematical understanding and computation.
+            
+            **Core Characteristics:**
+            - Difficulty understanding number concepts
+            - Problems with mathematical reasoning
+            - Challenges with calculation and computation
+            - Difficulty understanding mathematical symbols
+            
+            **Chart Common Manifestations:**
+            """)
+            
+            manifestations = {
+                "Area": [
+                    "Number Sense",
+                    "Calculation",
+                    "Problem Solving",
+                    "Mathematical Reasoning"
+                ],
+                "Difficulties": [
+                    "Understanding quantity, comparing numbers, number line concepts",
+                    "Basic arithmetic facts, multi-step calculations, algorithms",
+                    "Word problems, mathematical language, applying concepts",
+                    "Patterns, relationships, abstract mathematical thinking"
+                ],
+                "Support Strategies": [
+                    "Visual number representations, manipulatives, number lines",
+                    "Break down steps, provide algorithms, use calculators",
+                    "Graphic organizers, key word strategies, real-world connections",
+                    "Concrete examples, visual models, step-by-step instruction"
+                ]
+            }
+            
+            manifestations_df = pd.DataFrame(manifestations)
+            st.dataframe(manifestations_df, use_container_width=True)
+        
+        elif difficulty_type == "Dysgraphia":
+            st.markdown("""
+            ### Dysgraphia: Writing Difficulties
+            
+            #### **Definition and Characteristics**
+            Dysgraphia is a neurological condition affecting written expression and fine motor skills.
+            
+            **Types of Dysgraphia:**
+            
+            **1. Dyslexic Dysgraphia**
+            - Legible copying but illegible spontaneous writing
+            - Normal finger-tapping speed
+            - Related to phonological processing
+            
+            **2. Motor Dysgraphia**
+            - Illegible copying and spontaneous writing
+            - Slow finger-tapping speed
+            - Fine motor skill difficulties
+            
+            **3. Spatial Dysgraphia**
+            - Illegible copying, normal spontaneous writing
+            - Normal finger-tapping speed
+            - Visual-spatial processing issues
+            """)
+            
+            # Support strategies table
+            st.markdown("#### Support Strategies by Type")
+            
+            support_data = {
+                "Strategy Category": [
+                    "Physical Accommodations",
+                    "Technology Support", 
+                    "Instruction Modifications",
+                    "Assessment Alternatives"
+                ],
+                "Specific Strategies": [
+                    "Pencil grips, slanted writing surface, alternative seating",
+                    "Word processors, speech-to-text, digital note-taking",
+                    "Break writing into steps, provide graphic organizers",
+                    "Oral assessments, typed responses, extended time"
+                ]
+            }
+            
+            support_df = pd.DataFrame(support_data)
+            st.dataframe(support_df, use_container_width=True)
+
+    elif content_type == "Early Intervention":
+        st.markdown("## 🚀 Early Intervention Strategies")
+        
+        intervention_focus = st.selectbox(
+            "Intervention focus:",
+            ["Pre-Reading Skills", "Early Math", "Language Development", "Social-Emotional"]
+        )
+        
+        if intervention_focus == "Pre-Reading Skills":
+            st.markdown("""
+            ### Pre-Reading Skills Development
+            
+            #### **Essential Pre-Reading Components**
+            
+            **1. Phonological Awareness**
+            - Recognizing and manipulating sounds in spoken language
+            - Foundation for reading success
+            - Can be developed before formal reading instruction
+            """)
+            
+            # Phonological awareness progression
+            progression_data = {
+                "Skill Level": [
+                    "Word Awareness",
+                    "Syllable Awareness", 
+                    "Onset-Rime",
+                    "Phoneme Awareness"
+                ],
+                "Age Range": ["3-4 years", "4-5 years", "5-6 years", "6-7 years"],
+                "Activities": [
+                    "Counting words in sentences, recognizing word boundaries",
+                    "Clapping syllables, syllable deletion and addition",
+                    "Recognizing rhymes, identifying word families",
+                    "Sound isolation, blending, segmentation, manipulation"
+                ],
+                "Assessment": [
+                    "Can identify separate words in spoken sentences",
+                    "Can clap and count syllables in words",
+                    "Can identify rhyming words and word patterns",
+                    "Can manipulate individual sounds in words"
+                ]
+            }
+            
+            progression_df = pd.DataFrame(progression_data)
+            st.dataframe(progression_df, use_container_width=True)
+            
+            st.markdown("""
+            #### **🎵 Effective Pre-Reading Activities**
+            
+            **Phonological Awareness Games:**
+            - Sound matching and identification games
+            - Rhyming songs and poems
+            - Syllable clapping activities
+            - Sound blending and segmentation
+            
+            **Print Awareness Activities:**
+            - Environmental print exploration
+            - Book handling and orientation
+            - Letter recognition games
+            - Name writing practice
+            """)
+        
+        elif intervention_focus == "Early Math":
+            st.markdown("""
+            ### Early Mathematical Thinking
+            
+            #### **Number Sense Development**
+            
+            **Foundation Skills (Ages 3-5):**
+            - Counting with one-to-one correspondence
+            - Understanding "more" and "less"
+            - Recognizing numerals
+            - Simple pattern recognition
+            
+            **Advanced Skills (Ages 5-7):**
+            - Understanding number relationships
+            - Basic addition and subtraction concepts
+            - Place value understanding
+            - Mathematical problem-solving
+            """)
+            
+            # Early math milestones
+            milestone_data = {
+                "Age": ["3-4 years", "4-5 years", "5-6 years", "6-7 years"],
+                "Counting": [
+                    "Counts to 5-10",
+                    "Counts to 20, understands cardinality",
+                    "Counts to 100, skip counting by 10s",
+                    "Counts by 2s, 5s, 10s; understands odd/even"
+                ],
+                "Number Recognition": [
+                    "Recognizes numerals 1-5",
+                    "Recognizes numerals 1-10",
+                    "Recognizes numerals 1-20",
+                    "Recognizes numerals to 100"
+                ],
+                "Operations": [
+                    "Understands 'more' and 'less'",
+                    "Simple addition with objects",
+                    "Addition/subtraction within 10",
+                    "Addition/subtraction within 20"
+                ]
+            }
+            
+            milestone_df = pd.DataFrame(milestone_data)
+            st.dataframe(milestone_df, use_container_width=True)
+
+    elif content_type == "Academic Resources":
+        st.markdown("## Academic Resource Library")
+        
+        resource_category = st.selectbox(
+            "Resource category:",
+            ["Research Articles", "Best Practice Guides", "Intervention Programs", "Assessment Tools"]
+        )
+        
+        if resource_category == "Research Articles":
+            st.markdown("### Key Research Articles")
+            
+            # Research articles database
+            articles = [
+                {
+                    "Title": "The Science of Reading: A Handbook",
+                    "Author": "Snowling, M. J. & Hulme, C.",
+                    "Year": "2021",
+                    "Key Findings": "Comprehensive review of reading research, emphasizing structured literacy approaches",
+                    "Relevance": "Essential for understanding evidence-based reading instruction",
+                    "Citation": "Snowling, M. J., & Hulme, C. (2021). The science of reading: A handbook. Wiley."
+                },
+                {
+                    "Title": "Preventing Reading Difficulties in Young Children",
+                    "Author": "Snow, C. E., Burns, M. S., & Griffin, P.",
+                    "Year": "1998",
+                    "Key Findings": "Identifies predictors of reading success and failure; emphasizes early intervention",
+                    "Relevance": "Foundational text for early literacy intervention",
+                    "Citation": "Snow, C. E., Burns, M. S., & Griffin, P. (1998). Preventing reading difficulties in young children. National Academy Press."
+                },
+                {
+                    "Title": "Mathematical Learning Disabilities: Current Issues and Future Directions",
+                    "Author": "Gersten, R. & Chard, D.",
+                    "Year": "2019",
+                    "Key Findings": "Reviews effective interventions for mathematical learning difficulties",
+                    "Relevance": "Guidelines for math intervention and support",
+                    "Citation": "Gersten, R., & Chard, D. (2019). Mathematical learning disabilities. Journal of Learning Disabilities, 52(3), 123-145."
+                }
+            ]
+            
+            for article in articles:
+                with st.expander(f"{article['Title']} ({article['Year']})"):
+                    st.write(f"**Author(s):** {article['Author']}")
+                    st.write(f"**Key Findings:** {article['Key Findings']}")
+                    st.write(f"**Relevance:** {article['Relevance']}")
+                    st.write(f"**Citation:** {article['Citation']}")
+        
+        elif resource_category == "Best Practice Guides":
+            st.markdown("### List Best Practice Implementation Guides")
+            
+            practice_areas = ["Structured Literacy", "Multi-Tiered Support", "Universal Design", "Family Engagement"]
+            
+            selected_practice = st.selectbox("Select practice area:", practice_areas)
+            
+            if selected_practice == "Structured Literacy":
+                st.markdown("""
+                #### 🏗️ Structured Literacy Implementation
+                
+                **Core Components:**
+                
+                **1. Systematic and Cumulative**
+                - Skills taught in logical order
+                - Each lesson builds on previous learning
+                - Regular review and reinforcement
+                
+                **2. Explicit Instruction**
+                - Direct teaching of concepts and skills
+                - Clear explanations and modeling
+                - Guided practice before independence
+                
+                **3. Diagnostic and Responsive**
+                - Regular assessment of student progress
+                - Instruction adjusted based on data
+                - Individualized support as needed
+                
+                **Implementation Steps:**
+                """)
+                
+                implementation_steps = [
+                    "Assess current literacy curriculum and practices",
+                    "Provide professional development for teachers",
+                    "Select evidence-based curriculum materials",
+                    "Establish assessment and progress monitoring systems",
+                    "Create support structures for struggling students",
+                    "Monitor implementation and student outcomes"
+                ]
+                
+                for i, step in enumerate(implementation_steps, 1):
+                    st.write(f"{i}. {step}")
+
+    elif content_type == "Technology Tools":
+        st.markdown("## Technology Tools for Learning Support")
+        
+        tool_category = st.selectbox(
+            "Tool category:",
+            ["Reading Support", "Writing Assistance", "Math Tools", "Organization Apps", "Communication Aids"]
+        )
+        
+        if tool_category == "Reading Support":
+            st.markdown("### 📱 Reading Support Technologies")
+            
+            reading_tools = [
+                {
+                    "Tool": "Text-to-Speech Software",
+                    "Examples": "NaturalReader, Voice Dream Reader, Read&Write",
+                    "Benefits": "Helps with decoding, comprehension, and accessing grade-level content",
+                    "Best For": "Students with dyslexia, visual processing issues",
+                    "Implementation": "Start with short texts, teach controls, practice daily"
+                },
+                {
+                    "Tool": "Digital Highlighters",
+                    "Examples": "Kami, Hypothesis, Adobe Reader",
+                    "Benefits": "Helps with focus, note-taking, and text organization",
+                    "Best For": "Students who struggle with attention and organization",
+                    "Implementation": "Teach color-coding system, practice with short passages"
+                },
+                {
+                    "Tool": "Reading Comprehension Apps",
+                    "Examples": "Epic!, Reading A-Z, Lexia Core5",
+                    "Benefits": "Adaptive practice, immediate feedback, engaging content",
+                    "Best For": "Students needing additional reading practice",
+                    "Implementation": "Set appropriate levels, monitor progress, supplement instruction"
+                }
+            ]
+            
+            for tool in reading_tools:
+                with st.expander(f"🔧 {tool['Tool']}"):
+                    st.write(f"**Examples:** {tool['Examples']}")
+                    st.write(f"**Benefits:** {tool['Benefits']}")
+                    st.write(f"**Best For:** {tool['Best For']}")
+                    st.write(f"**Implementation:** {tool['Implementation']}")
+        
+        elif tool_category == "Writing Assistance":
+            st.markdown("### Writing Assistance Technologies")
+            
+            writing_tools_data = {
+                "Tool Type": [
+                    "Word Prediction",
+                    "Grammar Checkers", 
+                    "Graphic Organizers",
+                    "Speech-to-Text"
+                ],
+                "Examples": [
+                    "Co:Writer, WordQ, Ginger",
+                    "Grammarly, ProWritingAid, Ginger",
+                    "Inspiration, Kidspiration, MindMeister",
+                    "Dragon Naturally Speaking, Google Voice Typing"
+                ],
+                "Primary Benefits": [
+                    "Reduces spelling errors, improves vocabulary",
+                    "Identifies grammar and punctuation errors",
+                    "Helps organize thoughts and ideas",
+                    "Bypasses handwriting difficulties"
+                ]
+            }
+            
+            writing_tools_df = pd.DataFrame(writing_tools_data)
+            st.dataframe(writing_tools_df, use_container_width=True)
+
+    else:  # Support Strategies
+        st.markdown("## 🤝 Support Strategies for Different Stakeholders")
+        
+        stakeholder = st.selectbox(
+            "Select stakeholder group:",
+            ["Teachers", "Parents", "Administrators", "Students"]
+        )
+        
+        if stakeholder == "Teachers":
+            st.markdown("""
+            ### Teacher Teacher Support Strategies
+            
+            #### **Classroom Implementation**
+            
+            **Daily Practices:**
+            - Use explicit instruction methods
+            - Provide multiple means of representation
+            - Offer choice in how students demonstrate learning
+            - Implement regular progress monitoring
+            
+            **Lesson Planning:**
+            - Include universal design principles
+            - Plan for differentiated instruction
+            - Prepare accommodations and modifications
+            - Build in multiple practice opportunities
+            """)
+            
+            # Teacher checklist
+            st.markdown("####  Daily Teaching Checklist")
+            
+            checklist_items = [
+                "Clear learning objectives posted and explained",
+                "Multi-sensory instruction techniques used",
+                "Students given choice in activities or materials",
+                "Progress monitored and feedback provided",
+                "Accommodations implemented as needed",
+                "Positive reinforcement and encouragement given",
+                "Instructions broken into manageable steps",
+                "Visual supports and graphic organizers available"
+            ]
+            
+            for item in checklist_items:
+                st.checkbox(item, key=f"teacher_{item}")
+        
+        elif stakeholder == "Parents":
+            st.markdown("""
+            ### 👩👧👦 Parent Support Strategies
+            
+            #### **Home Home Support Techniques**
+            
+            **Creating a Supportive Environment:**
+            - Establish consistent routines and expectations
+            - Provide a quiet, organized homework space
+            - Celebrate effort and progress, not just achievement
+            - Maintain open communication with teachers
+            
+            **Academic Support:**
+            - Break homework into manageable chunks
+            - Use visual schedules and reminders
+            - Practice skills in fun, game-like ways
+            - Read together daily, regardless of child's reading level
+            """)
+            
+            # Parent resources
+            st.markdown("#### Recommended Parent Resources")
+            
+            parent_resources = [
+                {
+                    "Resource": "International Dyslexia Association",
+                    "Type": "Website",
+                    "Description": "Comprehensive information about dyslexia and reading difficulties",
+                    "Link": "https://dyslexiaida.org"
+                },
+                {
+                    "Resource": "Understood.org",
+                    "Type": "Website", 
+                    "Description": "Resources for learning and thinking differences",
+                    "Link": "https://understood.org"
+                },
+                {
+                    "Resource": "Learning Disabilities Association",
+                    "Type": "Organization",
+                    "Description": "Support and advocacy for individuals with learning disabilities",
+                    "Link": "https://ldaamerica.org"
+                }
+            ]
+            
+            for resource in parent_resources:
+                with st.expander(f"{resource['Resource']}"):
+                    st.write(f"**Type:** {resource['Type']}")
+                    st.write(f"**Description:** {resource['Description']}")
+                    st.write(f"**Link:** {resource['Link']}")
+
+    # Footer with additional resources
+    st.markdown("---")
+    st.markdown("### Additional Resources")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        **🏛️ Professional Organizations:**
+        - International Dyslexia Association
+        - Council for Exceptional Children
+        - International Reading Association
+        """)
+    
+    with col2:
+        st.markdown("""
+        **Research Centers:**
+        - Haskins Laboratories
+        - Florida Center for Reading Research
+        - What Works Clearinghouse
+        """)
+    
+    with col3:
+        st.markdown("""
+        **Practical Tools:**
+        - Evidence-based practice guides
+        - Assessment instruments
+        - Intervention curricula
+        """)
+
+if __name__ == "__main__":
+    main()
