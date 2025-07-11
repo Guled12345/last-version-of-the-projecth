@@ -168,6 +168,17 @@ def add_exact_ui_styles():
 
         /* Hide Streamlit default elements */
         #MainMenu, footer, header, .stDeployButton, .stDecoration {{ display: none !important; }}
+        /* NEW: Hide the "Made with Streamlit" footer */
+        div[data-testid="stToolbar"] + footer {{
+            visibility: hidden;
+            height: 0px;
+            overflow: hidden;
+        }}
+        .stApp > header {{
+            visibility: hidden;
+            height: 0px;
+            overflow: hidden;
+        }}
 
         /* Hamburger menu icon color */
         .stSidebar .st-emotion-cache-eq8clt, /* Hamburger menu */
