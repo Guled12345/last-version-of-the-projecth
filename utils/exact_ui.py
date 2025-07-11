@@ -166,18 +166,51 @@ def add_exact_ui_styles():
             backdrop-filter: blur(5px); /* Add blur effect */
         }}
 
-        /* Hide Streamlit default elements */
+        /* Hide Streamlit default elements like hamburger menu, footer, header, and deploy buttons */
+        /* This hides the "Made with Streamlit" as well as the deployer avatar in many cases */
         #MainMenu, footer, header, .stDeployButton, .stDecoration {{ display: none !important; }}
-        /* NEW: Hide the "Made with Streamlit" footer */
+        
+        /* More specific targeting for the bottom-right Streamlit footer/user info */
+        /* This specifically targets the element that contains the user avatar and "Made with Streamlit" text */
         div[data-testid="stToolbar"] + footer {{
             visibility: hidden;
             height: 0px;
             overflow: hidden;
+            display: none !important; /* Ensure it's completely gone */
         }}
+        
+        /* Hide the main Streamlit header bar if it appears */
         .stApp > header {{
             visibility: hidden;
             height: 0px;
             overflow: hidden;
+            display: none !important;
+        }}
+
+        /* Hide the 'Deploy with Streamlit' button */
+        .stDeployButton {{
+            visibility: hidden;
+            display: none;
+        }}
+
+        /* Hide the 'View source' button usually found in the hamburger menu or context menu */
+        /* This is a more robust selector for the 'View source' option */
+        button[data-testid="baseButton-header"] + div > ul > li:nth-child(2), /* This targets the 'View source' menu item */
+        a[href*="github.com"][target="_blank"] /* More general: any external link to github in the header */
+        {{
+            display: none !important;
+            visibility: hidden !important;
+        }}
+        /* Another common selector for "View source" or "Fork this app" */
+        .streamlit-expanderHeader > div > div > button[aria-label="View source"] {{
+            display: none !important;
+            visibility: hidden !important;
+        }}
+        /* Specifically target and hide the user avatar (it's often a child of the header or a specific div) */
+        /* This targets the common structure for the user/deployer avatar */
+        div[data-testid="stToolbar"] > div:last-child > div:last-child {{
+            display: none !important; /* Hides the user avatar and associated Crown icon/link */
+            visibility: hidden !important;
         }}
 
         /* Hamburger menu icon color */
