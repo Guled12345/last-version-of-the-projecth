@@ -1,5 +1,5 @@
 {
   "language": "English",
-  "offline_mode": false,
-  "theme": "Dark"
+  "offline_mode": true,
+  "theme": "System"
 }
