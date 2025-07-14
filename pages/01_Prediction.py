@@ -354,6 +354,7 @@ def main():
                 <li><strong>Optimization</strong>: Grid search validated</li>
                 <li><strong>Status</strong>: {get_material_icon_html('check_circle')} Ready for assessments</li>
             </ul>
+            <br>
         </div>
         """, unsafe_allow_html=True)
 
@@ -856,7 +857,7 @@ def main():
                                     col1, col2 = st.columns(2)
                                     with col1:
                                         risk_change = latest['probability'] - previous['probability']
-                                        trend = f"{get_material_icon_html('trending_up')} Increasing" if risk_change > 0.05 else f"{get_material_icon_html('trending_down')} Decreasing" if risk_change < -0.05 else f"{get_material_icon_html('trending_flat')} Stable"
+                                        trend = f"Increasing" if risk_change > 0.05 else f"Decreasing" if risk_change < -0.05 else f"Stable"
                                         st.metric("Risk Trend", trend, f"{risk_change:+.1%}")
                                     
                                     with col2:

@@ -137,18 +137,22 @@ def render_dashboard_page_content():
         else:
             scores_display = [75, 82, 70, 78, 80]
 
+        # Use px.bar and map subjects to color for distinct colors
         fig_bar = px.bar(
-            x=subjects, y=scores_display,
+            x=subjects,
+            y=scores_display,
             title="",
             labels={'x': 'Subjects', 'y': 'Average Score (%)'},
-            color_discrete_sequence=['var(--primary-purple)']
+            # Use a categorical color mapping for distinct colors
+            color=subjects, # Map colors by subject name
+            color_discrete_sequence=px.colors.qualitative.Plotly # Or choose another palette like 'Pastel', 'Set1', etc.
         )
         
         fig_bar.update_layout(
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             font=dict(family='Inter', color='var(--gray-700)'),
-            showlegend=False,
+            showlegend=False, # We don't need a legend if colors are tied to x-axis labels
             margin=dict(l=0, r=0, t=20, b=0),
             height=350,
             xaxis=dict(gridcolor='var(--gray-200)', showgrid=True),
