@@ -141,14 +141,41 @@ def create_progress_chart(data, metric):
                   markers=True,
                   color_discrete_sequence=[color])
     
+    # UPDATED layout for progress charts
     fig.update_layout(
-        xaxis_title="Date",
-        yaxis_title=metric.replace('_', ' ').title(),
-        height=350,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font={'family': 'Inter'},
-        margin=dict(l=20, r=20, t=40, b=20)
+        title=f"{metric.replace('_', ' ').title()} Progress Over Time", # Title from metric
+        height=450,
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent plot area
+        margin=dict(l=60, r=40, t=60, b=60),
+        font=dict(family='Inter', color='var(--gray-700)'),
+        showlegend=False, # Typically no legend for single line charts
+        xaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title="Date", # Changed title to Date for progress charts
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        yaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title=metric.replace('_', ' ').title(), # Title from metric
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter'
+        )
     )
     
     return fig
@@ -192,20 +219,48 @@ def create_weekly_summary(data):
             marker=dict(size=8)
         ))
     
+    # UPDATED layout for weekly summary chart
     fig.update_layout(
         title="Weekly Progress Summary",
-        xaxis_title="Week",
-        yaxis_title="Score",
-        height=400,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font={'family': 'Inter'},
+        height=450,
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent plot area
+        margin=dict(l=60, r=40, t=60, b=60),
+        font=dict(family='Inter', color='var(--gray-700)'),
+        showlegend=True,
         legend=dict(
             orientation="h",
             yanchor="bottom",
             y=1.02,
-            xanchor="right",
-            x=1
+            xanchor="center",
+            x=0.5,
+            font=dict(color='var(--gray-700)')
+        ),
+        xaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title="Week",
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        yaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title="Score",
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter'
         )
     )
     
@@ -668,7 +723,7 @@ def main():
                      delta=f"{total_reading // len(df):.0f} min/day")
         
         # Enhanced tabbed analysis
-        tab1, tab2, tab3, tab4 = st.tabs([f"{get_material_icon_html('library_books')} Academic", f"{get_material_icon_html('psychology')} Behavioral", f"{get_material_icon_html('sentiment_satisfied')} Emotional", f"{get_material_icon_html('directions_run')} Health & Lifestyle"])
+        tab1, tab2, tab3, tab4 = st.tabs([f"Academic", f"Behavioral", f"Emotional", f"Health & Lifestyle"])
         
         with tab1:
             st.markdown("### Academic Performance Trends")
@@ -676,14 +731,22 @@ def main():
             col1, col2 = st.columns(2)
             
             with col1:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 homework_fig = create_progress_chart(child_observations, 'homework_completion')
                 if homework_fig:
                     st.plotly_chart(homework_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             with col2:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 reading_fig = create_progress_chart(child_observations, 'reading_time')
                 if reading_fig:
                     st.plotly_chart(reading_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             st.markdown(f"#### {get_material_icon_html('analytics')} Subject Difficulty Analysis", unsafe_allow_html=True)
             
@@ -692,19 +755,54 @@ def main():
                 all_subjects.extend(obs.get('subjects_struggled', []))
             
             if all_subjects:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 subject_counts = pd.Series(all_subjects).value_counts()
+                
+                # UPDATED layout for fig_subjects
                 fig_subjects = px.bar(x=subject_counts.index, y=subject_counts.values,
                                      title="Subjects with Most Difficulties",
                                      labels={'x': 'Subject', 'y': 'Number of Days'},
                                      color=subject_counts.values,
                                      color_continuous_scale='Reds')
                 fig_subjects.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)', 
+                    title="Subjects with Most Difficulties",
+                    height=450,
+                    paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)',
-                    showlegend=False,
-                    height=350
+                    margin=dict(l=60, r=40, t=60, b=60),
+                    font=dict(family='Inter', color='var(--gray-700)'),
+                    showlegend=False, # Typically no legend for bar charts if color is just one scale
+                    xaxis=dict(
+                        gridcolor='var(--gray-200)',
+                        showgrid=True,
+                        title="Subject",
+                        title_font=dict(size=14, color='var(--gray-700)'),
+                        tickfont=dict(size=12, color='var(--gray-600)'),
+                        showline=True,
+                        linecolor='var(--gray-300)',
+                        mirror=True
+                    ),
+                    yaxis=dict(
+                        gridcolor='var(--gray-200)',
+                        showgrid=True,
+                        title="Number of Days",
+                        title_font=dict(size=14, color='var(--gray-700)'),
+                        tickfont=dict(size=12, color='var(--gray-600)'),
+                        showline=True,
+                        linecolor='var(--gray-300)',
+                        mirror=True
+                    ),
+                    hovermode='x unified',
+                    hoverlabel=dict(
+                        bgcolor='white',
+                        font_size=12,
+                        font_family='Inter'
+                    )
                 )
                 st.plotly_chart(fig_subjects, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
                 
                 # Insights
                 most_difficult = subject_counts.index[0] if len(subject_counts) > 0 else None
@@ -715,10 +813,14 @@ def main():
         
         with tab2:
             st.markdown("### Behavioral Progress Analysis")
+            st.markdown("""
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+            """, unsafe_allow_html=True) # Start of styled div
             behavior_fig = create_progress_chart(child_observations, 'behavior_rating')
             if behavior_fig:
                 st.plotly_chart(behavior_fig, use_container_width=True)
-            
+            st.markdown("</div>", unsafe_allow_html=True) # End of styled div
+
             col1, col2, col3 = st.columns(3)
             
             with col1:
@@ -749,32 +851,91 @@ def main():
             
             # Behavior distribution
             st.markdown("#### Behavior Rating Distribution")
+            st.markdown("""
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+            """, unsafe_allow_html=True) # Start of styled div
             behavior_dist = df['behavior_rating'].value_counts().sort_index()
+            
+            # UPDATED layout for fig_behavior_dist
             fig_behavior_dist = px.pie(values=behavior_dist.values, 
                                      names=[f"Rating {i}" for i in behavior_dist.index],
                                      title="Distribution of Daily Behavior Ratings",
                                      color_discrete_sequence=px.colors.qualitative.Set3)
-            fig_behavior_dist.update_layout(height=350)
+            fig_behavior_dist.update_layout(
+                title="Distribution of Daily Behavior Ratings",
+                height=450,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=60, r=40, t=60, b=60),
+                font=dict(family='Inter', color='var(--gray-700)'),
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(color='var(--gray-700)')
+                ),
+                hovermode='closest', # Pie charts usually use 'closest'
+                hoverlabel=dict(
+                    bgcolor='white',
+                    font_size=12,
+                    font_family='Inter'
+                )
+            )
             st.plotly_chart(fig_behavior_dist, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True) # End of styled div
         
         with tab3:
             st.markdown("### Emotional Well-being Tracking")
-            
+            st.markdown("""
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+            """, unsafe_allow_html=True) # Start of styled div
             mood_fig = create_progress_chart(child_observations, 'mood_rating')
             if mood_fig:
                 st.plotly_chart(mood_fig, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             col1, col2 = st.columns(2)
             
             with col1:
                 st.markdown("#### Mood Distribution")
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 mood_dist = df['mood_rating'].value_counts().sort_index()
+                
+                # UPDATED layout for fig_mood_dist
                 fig_mood_dist = px.pie(values=mood_dist.values, 
                                      names=[f"Mood Level {i}" for i in mood_dist.index],
                                      title="Emotional State Distribution",
                                      color_discrete_sequence=px.colors.qualitative.Pastel)
-                fig_mood_dist.update_layout(height=300)
+                fig_mood_dist.update_layout(
+                    title="Emotional State Distribution",
+                    height=450,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=60, r=40, t=60, b=60),
+                    font=dict(family='Inter', color='var(--gray-700)'),
+                    showlegend=True,
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="center",
+                        x=0.5,
+                        font=dict(color='var(--gray-700)')
+                    ),
+                    hovermode='closest', # Pie charts usually use 'closest'
+                    hoverlabel=dict(
+                        bgcolor='white',
+                        font_size=12,
+                        font_family='Inter'
+                    )
+                )
                 st.plotly_chart(fig_mood_dist, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             with col2:
                 st.markdown("#### Emotional Insights")
@@ -808,14 +969,22 @@ def main():
             col1, col2 = st.columns(2)
             
             with col1:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 sleep_fig = create_progress_chart(child_observations, 'sleep_hours')
                 if sleep_fig:
                     st.plotly_chart(sleep_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             with col2:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 activity_fig = create_progress_chart(child_observations, 'physical_activity')
                 if activity_fig:
                     st.plotly_chart(activity_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             st.markdown("#### Health & Lifestyle Summary")
             
@@ -861,6 +1030,8 @@ def main():
                         st.warning( "Monitor medication schedule")
 
     elif dashboard_view == "Weekly Summary":
+        st.markdown("---")
+
         st.markdown(f"## {get_material_icon_html('calendar_today')} Weekly Progress Summary", unsafe_allow_html=True)
         st.markdown(f"Comprehensive weekly analysis for **{child_name}**")
         
@@ -882,8 +1053,14 @@ def main():
         # Enhanced weekly summary with animations
         weekly_fig, weekly_data = create_weekly_summary(child_observations)
         
+        st.markdown(f"### **{get_material_icon_html('insights')} Your Weekly Progress Trends**", unsafe_allow_html=True)
+        
         if weekly_fig:
+            # --- START STYLING FOR WEEKLY SUMMARY PLOT ---
+            # st.markdown("---")
             st.plotly_chart(weekly_fig, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            # --- END STYLING FOR WEEKLY SUMMARY PLOT ---
             
             if weekly_data is not None and not weekly_data.empty:
                 st.markdown(f"### {get_material_icon_html('target')} Weekly Insights & Recommendations", unsafe_allow_html=True)
@@ -932,19 +1109,19 @@ def main():
                         concerns = []
                         
                         if homework_change > 5:
-                            improvements.append(f"{get_material_icon_html('trending_up')} Homework completion improved")
+                            improvements.append(f"Homework completion improved")
                         elif homework_change < -5:
-                            concerns.append(f"{get_material_icon_html('trending_down')} Homework completion declined")
+                            concerns.append(f"Homework completion declined")
                         
                         if behavior_change > 0.3:
-                            improvements.append(f"{get_material_icon_html('sentiment_satisfied')} Behavior rating improved")
+                            improvements.append(f"Behavior rating improved")
                         elif behavior_change < -0.3:
-                            concerns.append(f"{get_material_icon_html('sentiment_dissatisfied')} Behavior rating declined")
+                            concerns.append(f"Behavior rating declined")
                         
                         if mood_change > 0.3:
-                            improvements.append(f"{get_material_icon_html('star')} Mood has improved")
+                            improvements.append(f"Mood has improved")
                         elif mood_change < -0.3:
-                            concerns.append(f"{get_material_icon_html('cloud')} Mood has declined")
+                            concerns.append(f"Mood has declined")
                         
                         if improvements:
                             st.markdown("**Positive Changes:**")
@@ -1081,19 +1258,19 @@ def main():
             behavior_rating = obs['behavior_rating']
             if behavior_rating >= 4:
                 header_color = "#10b981"  # Green
-                rating_emoji = get_material_icon_html('sentiment_satisfied')
+                rating_icon = get_material_icon_html('sentiment_satisfied')
             elif behavior_rating >= 3:
                 header_color = "#3b82f6"  # Blue
-                rating_emoji = get_material_icon_html('sentiment_neutral')
+                rating_icon = get_material_icon_html('sentiment_neutral')
             else:
                 header_color = "#f59e0b"  # Orange
-                rating_emoji = get_material_icon_html('sentiment_dissatisfied')
+                rating_icon = get_material_icon_html('sentiment_dissatisfied')
             
             st.markdown(
                 f"""
                 <div style="border-left: 5px solid {header_color}; padding: 0.5rem 1rem; margin-bottom: 1rem; background-color: #f9fafb;">
                     <h4 style="margin: 0; font-size: 1rem; color: {header_color};">
-                        {rating_emoji} Observation on {obs_date.strftime('%B %d, %Y')}
+                        {rating_icon} Observation on {obs_date.strftime('%B %d, %Y')}
                     </h4>
                     <p style="margin: 0.5rem 0 0 0;">{obs['note']}</p>
                 </div>
@@ -1101,7 +1278,18 @@ def main():
                 unsafe_allow_html=True
             )
 
-            with st.expander(f"{rating_emoji} {obs_date.strftime('%A, %B %d, %Y')} - Behavior: {behavior_rating}/5"):
+            with st.expander(f"Observation on {obs_date.strftime('%A, %B %d, %Y')} - Behavior: {behavior_rating}/5"):
+                st.markdown(
+                    f"""
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        {rating_icon}
+                        <strong>Detailed Observation</strong>
+                    </div>
+                    <p>{obs['note']}</p>
+                    """,
+                    unsafe_allow_html=True
+                )
+
                 # Quick metrics row
                 metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
                 
@@ -1120,7 +1308,7 @@ def main():
                     detail_col1, detail_col2, detail_col3 = st.columns(3)
                     
                     with detail_col1:
-                        st.markdown(f"** Academic Details**", unsafe_allow_html=True)
+                        st.markdown(f"**Academic Details**", unsafe_allow_html=True)
                         st.write(f"• Focus Level: {obs.get('focus_level', 'N/A')}")
                         if obs.get('subjects_struggled'):
                             st.write(f"• Difficult Subjects: {', '.join(obs['subjects_struggled'])}")
@@ -1128,14 +1316,14 @@ def main():
                             st.write("• No subject difficulties")
                     
                     with detail_col2:
-                        st.markdown(f"** Behavioral & Social**", unsafe_allow_html=True)
+                        st.markdown(f"**Behavioral & Social**", unsafe_allow_html=True)
                         st.write(f"• Energy Level: {obs.get('energy_level', 'N/A')}")
                         st.write(f"• Screen Time: {obs['screen_time']} hrs")
                         st.write(f"• Physical Activity: {obs['physical_activity']} min")
                     
                     with detail_col3:
-                        st.markdown(f"** Health & Special**", unsafe_allow_html=True)
-                        med_status = f"{get_material_icon_html('check_circle')} Yes" if obs['medication_taken'] else f"{get_material_icon_html('cancel')} No"
+                        st.markdown(f"**Health & Special**", unsafe_allow_html=True)
+                        med_status = f"Yes" if obs['medication_taken'] else f"No"
                         st.write(f"• Medication: {med_status}")
                         if obs.get('special_events'):
                             st.write(f"• Special Events: {obs['special_events']}")
@@ -1143,7 +1331,7 @@ def main():
                     # Detailed notes
                     if any([obs.get('learning_wins'), obs.get('challenges_faced'), 
                            obs.get('strategies_used'), obs.get('social_interactions')]):
-                        st.markdown(f"** Detailed Notes:**", unsafe_allow_html=True)
+                        st.markdown(f"**Detailed Notes:**", unsafe_allow_html=True)
                         
                         if obs.get('learning_wins'):
                             st.success( f"**Wins:** {obs['learning_wins']}")

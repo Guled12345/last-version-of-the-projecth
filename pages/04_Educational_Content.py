@@ -672,7 +672,7 @@ def main():
         with resources_col[1]:
             st.markdown(f"**{get_material_icon_html('library_books')} Evidence-Based Resource Collection**", unsafe_allow_html=True)
             render_lottie(
-                "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gn.json",
+                "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gN.json",
                 height=250,
                 key="academic_resources_focus",
                 fallback_icon="library_books",
@@ -836,7 +836,7 @@ def main():
         with support_col[1]:
             st.markdown(f"**{get_material_icon_html('handshake')} Collaborative Support Strategies**", unsafe_allow_html=True)
             render_lottie(
-                "https://lottie.host/15c1c3e6-35bf-4933-bc7e-193fa1580efe/iwAfN5Qwfz.json",
+                "https://lottie.host/15c1c3e6-35bf-4933-bc7e-193fa1580efe/iwAfN5QwfZ.json",
                 height=250,
                 key="support_strategies_focus",
                 fallback_icon="groups",
