@@ -1,4 +1,5 @@
-# pages/04_Educational_Content.py - Final Enhanced Version
+# pages/04_Educational_Content.py - Enhanced with Material Icons
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -126,13 +127,13 @@ def main():
     )
     
     # Enhanced hero section with multiple animations
-    st.markdown("### 🌟 Educational Excellence in Action")
+    st.markdown(f"### {get_material_icon_html('star')} Educational Excellence in Action", unsafe_allow_html=True)
     
     # Three-column animation layout
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("**📚 Learning Excellence**")
+        st.markdown(f"**{get_material_icon_html('library_books')} Learning Excellence**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/5940ae0a-4ef4-4f79-a517-abce94639765/H8tXMAPaUK.json",
             height=200,
@@ -143,7 +144,7 @@ def main():
         st.caption("Research-based educational strategies and methodologies")
     
     with col2:
-        st.markdown("**🔬 Research Innovation**")
+        st.markdown(f"**{get_material_icon_html('science')} Research Innovation**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gn.json",
             height=200,
@@ -154,7 +155,7 @@ def main():
         st.caption("Cutting-edge educational research and development")
     
     with col3:
-        st.markdown("**🎯 Student Success**")
+        st.markdown(f"**{get_material_icon_html('target')} Student Success**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/4e1ac443-9c90-4a25-b20d-c918d5a0290f/pa2Qd9xE5l.json",
             height=200,
@@ -166,95 +167,101 @@ def main():
 
     # Enhanced educational impact showcase
     st.markdown("---")
-    st.markdown("### 📊 Educational Impact & Research")
+    st.markdown(f"### {get_material_icon_html('analytics')} Educational Impact & Research", unsafe_allow_html=True)
     
     impact_col1, impact_col2 = st.columns(2)
     
     with impact_col1:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s ease;"
              onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-            <h3>🌍 Global Best Practices</h3>
+            <h3>{get_material_icon_html('public')} Global Best Practices</h3>
             <p>International standards and evidence-based approaches for inclusive education</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
-                <strong>📊 150+ Research Studies | 🌐 25+ Countries</strong>
+                <strong>{get_material_icon_html('analytics')} 150+ Research Studies | {get_material_icon_html('public')} 25+ Countries</strong>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s ease;"
              onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-            <h3>📊 Intervention Studies</h3>
+            <h3>{get_material_icon_html('analytics')} Intervention Studies</h3>
             <p>Evidence-based intervention strategies with measurable outcomes</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
-                <strong>📈 85% Success Rate | 👥 10,000+ Students</strong>
+                <strong>{get_material_icon_html('trending_up')} 85% Success Rate | {get_material_icon_html('groups')} 10,000+ Students</strong>
             </div>
         </div>
         """, unsafe_allow_html=True)
     
     with impact_col2:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s ease;"
              onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-            <h3>🧠 Learning Science</h3>
+            <h3>{get_material_icon_html('psychology')} Learning Science</h3>
             <p>Neuroscience and cognitive research insights for optimal learning</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
-                <strong>🔬 200+ Studies | 🧪 50+ Experiments</strong>
+                <strong>{get_material_icon_html('science')} 200+ Studies | {get_material_icon_html('biotech')} 50+ Experiments</strong>
             </div>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s ease;"
              onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-            <h3>🤝 Cultural Adaptation</h3>
+            <h3>{get_material_icon_html('handshake')} Cultural Adaptation</h3>
             <p>Implementing inclusive educational practices across diverse communities</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
-                <strong>🌍 40+ Cultures | 📚 100+ Adaptations</strong>
+                <strong>{get_material_icon_html('public')} 40+ Cultures | {get_material_icon_html('library_books')} 100+ Adaptations</strong>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     # Enhanced content selection
     st.markdown("---")
-    st.markdown("### 🎯 Explore Educational Content")
+    st.markdown(f"### {get_material_icon_html('target')} Explore Educational Content", unsafe_allow_html=True)
     
     content_col1, content_col2 = st.columns(2)
-    
+
     with content_col1:
         content_type = st.selectbox(
-            "📋 Content Category",
+            "Content Category",
             [
-                "🔬 Research Overview",
-                "🧩 Types of Learning Difficulties", 
-                "🚀 Early Intervention Strategies",
-                "📚 Academic Resources Library",
-                "💻 Technology Tools & Platforms",
-                "🤝 Support Strategies & Best Practices"
+                "Research Overview",
+                "Types of Learning Difficulties", 
+                "Early Intervention Strategies",
+                "Academic Resources Library",
+                "Technology Tools & Platforms",
+                "Support Strategies & Best Practices"
             ],
             key="content_category_selector"
         )
-    
+
     with content_col2:
         audience = st.selectbox(
-            "👥 Target Audience",
-            ["👩‍🏫 Teachers", "👨‍👩‍👧‍👦 Parents", "🏢 Administrators", "🌐 All Stakeholders"],
+            "Target Audience",
+            [
+                "Teachers",
+                "Parents",
+                "Administrators",
+                "All Stakeholders"
+            ],
             key="audience_selector"
         )
 
+
     # Enhanced content sections
-    if content_type == "🔬 Research Overview":
-        st.markdown("## 📊 Research Overview: Learning Difficulties")
+    if content_type == f"Research Overview":
+        st.markdown(f"## {get_material_icon_html('analytics')} Research Overview: Learning Difficulties", unsafe_allow_html=True)
         
         # Add research-focused animation
         research_col = st.columns([1, 2, 1])
         with research_col[1]:
-            st.markdown("**🔬 Data-Driven Research Excellence**")
+            st.markdown(f"**{get_material_icon_html('science')} Data-Driven Research Excellence**", unsafe_allow_html=True)
             render_lottie(
                 "https://lottie.host/8a1c9f65-4b8d-4e2f-9a3c-7f6e5d4c3b2a/M4X8jK9wR6.json",
                 height=250,
@@ -264,7 +271,7 @@ def main():
             )
             st.caption("Evidence-based research driving educational innovation")
         
-        tab1, tab2, tab3 = st.tabs(["📈 Statistics", "🧠 Neuroscience", "🎯 Impact Studies"])
+        tab1, tab2, tab3 = st.tabs([f"Statistics", f"Neuroscience", f"Impact Studies"])
         
         with tab1:
             st.markdown("### Learning Difficulties Statistics")
@@ -305,12 +312,12 @@ def main():
                 st.metric("Improvement Rate", "80%", "with intervention")
         
         with tab2:
-            st.markdown("""
-            #### **Brain-Based Understanding of Learning Difficulties**
+            st.markdown(f"""
+            #### **{get_material_icon_html('psychology')} Brain-Based Understanding of Learning Difficulties**
             
             Learning difficulties are neurobiological in origin, involving differences in brain structure and function:
             
-            **🧠 Key Brain Areas Affected:**
+            **{get_material_icon_html('psychology')} Key Brain Areas Affected:**
             
             **1. Left Hemisphere Language Areas**
             - **Broca's Area**: Speech production and grammar processing
@@ -326,10 +333,10 @@ def main():
             - Prefrontal cortex involvement in executive function
             - Information processing speed and capacity limitations
             - Attention and cognitive control challenges
-            """)
+            """, unsafe_allow_html=True)
             
-            st.markdown("""
-            #### **🌟 Neuroplasticity and Intervention**
+            st.markdown(f"""
+            #### **{get_material_icon_html('star')} Neuroplasticity and Intervention**
             
             **The Brain's Remarkable Ability to Change:**
             - Intensive, structured intervention can create new neural pathways
@@ -337,14 +344,14 @@ def main():
             - Multi-sensory approaches enhance connectivity between brain regions
             - Consistent practice strengthens and stabilizes new neural networks
             
-            **🔬 Research Evidence:**
+            **{get_material_icon_html('science')} Research Evidence:**
             - fMRI studies demonstrate measurable brain changes after intensive intervention
             - Increased activation in left hemisphere reading networks post-intervention
             - Improved white matter connectivity between language areas
             - Long-term structural brain changes possible with sustained intervention
-            """)
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### ⏰ Critical Intervention Periods")
+            st.markdown(f"#### {get_material_icon_html('schedule')} Critical Intervention Periods", unsafe_allow_html=True)
             
             timeline_data = {
                 "Age Range": ["3-5 years", "6-8 years", "9-12 years", "13+ years"],
@@ -362,8 +369,8 @@ def main():
             st.dataframe(timeline_df, use_container_width=True, hide_index=True)
         
         with tab3:
-            st.markdown("""
-            #### **🏆 Major Research Findings & Evidence**
+            st.markdown(f"""
+            #### **{get_material_icon_html('emoji_events')} Major Research Findings & Evidence**
             
             **National Reading Panel (2000) - Landmark Study**
             - Systematic phonics instruction is essential for beginning readers
@@ -371,12 +378,12 @@ def main():
             - Guided oral reading builds fluency more effectively than silent reading
             - Vocabulary instruction enhances reading comprehension across grades
             
-            **📊 Meta-Analysis Studies (Multiple Reviews)**
+            **{get_material_icon_html('analytics')} Meta-Analysis Studies (Multiple Reviews)**
             - Intensive intervention shows large effect sizes (Cohen's d > 0.8)
             - Early intervention prevents reading failure in 75-85% of at-risk students
             - Multi-component approaches outperform single-strategy interventions
             - Technology tools can enhance but not replace systematic instruction
-            """)
+            """, unsafe_allow_html=True)
             
             intervention_data = {
                 "Intervention Type": [
@@ -404,8 +411,8 @@ def main():
             fig_effectiveness.update_layout(height=400)
             st.plotly_chart(fig_effectiveness, use_container_width=True)
             
-            st.markdown("""
-            #### **📈 Longitudinal Study Insights**
+            st.markdown(f"""
+            #### **{get_material_icon_html('trending_up')} Longitudinal Study Insights**
             
             **Connecticut Longitudinal Study (Shaywitz et al.) - 20+ Year Follow-up**
             - Tracked 445 children from kindergarten through high school
@@ -414,15 +421,15 @@ def main():
             - Brain imaging reveals intervention literally changes neural pathways
             - Self-esteem and academic motivation significantly improve with effective support
             - Students receiving intensive early intervention show normalized brain activation patterns
-            """)
+            """, unsafe_allow_html=True)
 
-    elif content_type == "🧩 Types of Learning Difficulties":
-        st.markdown("## 🧩 Understanding Different Learning Difficulties")
+    elif content_type == f"Types of Learning Difficulties":
+        st.markdown(f"## {get_material_icon_html('extension')} Understanding Different Learning Difficulties", unsafe_allow_html=True)
         
         # Add learning types animation
         types_col = st.columns([1, 2, 1])
         with types_col[1]:
-            st.markdown("**🧩 Learning Differences & Strengths**")
+            st.markdown(f"**{get_material_icon_html('extension')} Learning Differences & Strengths**", unsafe_allow_html=True)
             render_lottie(
                 "https://lottie.host/15c1c3e6-35bf-4933-bc7e-193fa1580efe/iwAfN5QwfZ.json",
                 height=250,
@@ -439,93 +446,93 @@ def main():
         )
         
         if difficulty_type == "Dyslexia":
-            st.markdown("""
-            #### **📖 Dyslexia: Understanding Reading Challenges**
+            st.markdown(f"""
+            #### **{get_material_icon_html('menu_book')} Dyslexia: Understanding Reading Challenges**
             
             Dyslexia is a neurobiological learning difference that affects reading and language processing, 
             despite adequate intelligence and educational opportunities.
             
-            **🎯 Core Characteristics:**
+            **{get_material_icon_html('target')} Core Characteristics:**
             - Difficulty with accurate and/or fluent word recognition
             - Challenges with spelling and decoding unfamiliar words
             - Problems with phonological processing (sound-letter connections)
             - Reading comprehension may be affected secondary to decoding difficulties
             - Often accompanied by significant strengths in reasoning, creativity, and big-picture thinking
             
-            **⚡ Strengths Often Associated with Dyslexia:**
+            **{get_material_icon_html('bolt')} Strengths Often Associated with Dyslexia:**
             - Enhanced creative thinking and problem-solving abilities
             - Strong spatial reasoning and 3D visualization skills
             - Excellent big-picture perspective and strategic thinking
             - High levels of empathy and interpersonal skills
             - Innovative approaches to challenges
-            """)
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### 🕒 Observable Signs by Developmental Stage")
+            st.markdown(f"#### {get_material_icon_html('schedule')} Observable Signs by Developmental Stage", unsafe_allow_html=True)
             
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                st.markdown("""
-                **🧒 Early Years (Ages 3-5):**
+                st.markdown(f"""
+                **{get_material_icon_html('child_care')} Early Years (Ages 3-5):**
                 - Delayed speech development or unclear speech
                 - Difficulty learning nursery rhymes or rhyming games
                 - Problems learning alphabet letters and sounds
                 - Trouble following multi-step directions
                 - Family history of reading or learning difficulties
-                """)
+                """, unsafe_allow_html=True)
             
             with col2:
-                st.markdown("""
-                **📚 Elementary (Ages 6-8):**
+                st.markdown(f"""
+                **{get_material_icon_html('library_books')} Elementary (Ages 6-8):**
                 - Slow progress in learning to read
                 - Difficulty sounding out words or blending sounds
                 - Confusing similar-looking words (was/saw, on/no)
                 - Avoiding reading activities or expressing reading anxiety
                 - Strong listening comprehension vs. reading comprehension gap
-                """)
+                """, unsafe_allow_html=True)
             
             with col3:
-                st.markdown("""
-                **🎓 Older Students (Ages 9+):**
+                st.markdown(f"""
+                **{get_material_icon_html('school')} Older Students (Ages 9+):**
                 - Reading significantly below grade level expectations
                 - Difficulty with reading comprehension of complex texts
                 - Poor spelling despite extensive instruction and practice
                 - Avoiding written assignments or taking much longer to complete
                 - Fatigue after reading for short periods
-                """)
+                """, unsafe_allow_html=True)
             
-            st.markdown("""
-            #### **🧠 Neurological Understanding**
+            st.markdown(f"""
+            #### **{get_material_icon_html('psychology')} Neurological Understanding**
             - Differences in left hemisphere language processing areas
             - Reduced connectivity in reading-specific neural networks
             - Phonological processing deficits at the neurological level
             - Working memory challenges affecting reading fluency
             - Often compensated by enhanced right-hemisphere processing
             
-            #### **🛠️ Evidence-Based Interventions**
+            #### **{get_material_icon_html('build')} Evidence-Based Interventions**
             - **Structured Literacy Approaches**: Systematic, explicit instruction in phonology, morphology, and syntax
             - **Multi-sensory Programs**: Orton-Gillingham, Wilson Reading System, Barton Reading & Spelling
             - **Assistive Technology**: Text-to-speech, speech-to-text, audiobooks, reading apps
             - **Accommodations**: Extended time, alternative formats, reduced reading load
             - **Strength-Based Learning**: Leveraging visual, spatial, and creative abilities
-            """)
+            """, unsafe_allow_html=True)
         
         elif difficulty_type == "Dyscalculia":
-            st.markdown("""
-            #### **🔢 Dyscalculia: Mathematical Learning Challenges**
+            st.markdown(f"""
+            #### **{get_material_icon_html('calculate')} Dyscalculia: Mathematical Learning Challenges**
             
             Dyscalculia is a specific learning difficulty that affects mathematical understanding, 
             number sense, and mathematical reasoning abilities.
             
-            **🎯 Core Characteristics:**
+            **{get_material_icon_html('target')} Core Characteristics:**
             - Difficulty understanding number concepts and relationships
             - Problems with mathematical reasoning and problem-solving
             - Challenges with calculation, computation, and math facts
             - Difficulty understanding mathematical symbols and operations
             - Trouble with time, money, and measurement concepts
-            """)
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### 📊 Common Areas of Difficulty")
+            st.markdown(f"#### {get_material_icon_html('analytics')} Common Areas of Difficulty", unsafe_allow_html=True)
             
             manifestations = {
                 "Mathematical Area": [
@@ -557,21 +564,21 @@ def main():
             manifestations_df = pd.DataFrame(manifestations)
             st.dataframe(manifestations_df, use_container_width=True, hide_index=True)
             
-            st.markdown("""
-            #### **💡 Strengths Often Present:**
+            st.markdown(f"""
+            #### **{get_material_icon_html('lightbulb')} Strengths Often Present:**
             - Strong language and verbal reasoning abilities
             - Excellent memory for stories, facts, and information
             - Creative problem-solving in non-mathematical areas
             - Strong social and interpersonal skills
-            """)
+            """, unsafe_allow_html=True)
 
-    elif content_type == "🚀 Early Intervention Strategies":
-        st.markdown("## 🚀 Early Intervention: The Foundation of Success")
+    elif content_type == f"Early Intervention Strategies":
+        st.markdown(f"## {get_material_icon_html('rocket_launch')} Early Intervention: The Foundation of Success", unsafe_allow_html=True)
         
         # Add early intervention animation
         early_col = st.columns([1, 2, 1])
         with early_col[1]:
-            st.markdown("**🌱 Early Intervention Excellence**")
+            st.markdown(f"**{get_material_icon_html('eco')} Early Intervention Excellence**", unsafe_allow_html=True)
             render_lottie(
                 "https://lottie.host/4d42d6a6-8290-4b13-b3ab-2a10a490e6db/9oJrI4pj1f.json",
                 height=250,
@@ -582,16 +589,16 @@ def main():
             st.caption("The earlier the intervention, the greater the impact on learning outcomes")
         
         intervention_focus = st.selectbox(
-            "🎯 Select intervention focus area:",
+            f"Select intervention focus area:",
             ["Pre-Reading & Literacy Foundations", "Early Mathematical Concepts", "Language Development", "Social-Emotional Learning"],
             key="intervention_focus_selector"
         )
         
         if intervention_focus == "Pre-Reading & Literacy Foundations":
-            st.markdown("""
-            #### **📚 Building Essential Pre-Reading Skills**
+            st.markdown(f"""
+            #### **{get_material_icon_html('library_books')} Building Essential Pre-Reading Skills**
             
-            **🔑 Core Foundation: Phonological Awareness**
+            **{get_material_icon_html('key')} Core Foundation: Phonological Awareness**
             Early phonological awareness is the strongest predictor of later reading success and can be developed 
             before formal reading instruction begins.
             
@@ -599,15 +606,15 @@ def main():
             - Children who struggle with phonological awareness are at high risk for reading difficulties
             - These skills can be taught and improved with targeted practice
             - Early intervention in this area prevents later reading failure in 75-85% of at-risk children
-            """)
+            """, unsafe_allow_html=True)
             
             # Enhanced phonological awareness progression
             progression_data = {
                 "Developmental Level": [
-                    "🎵 Word Awareness",
-                    "👏 Syllable Awareness", 
-                    "🎯 Onset-Rime Recognition",
-                    "🔊 Phoneme Awareness"
+                    f"Word Awareness",
+                    f"Syllable Awareness", 
+                    f"Onset-Rime Recognition",
+                    f"Phoneme Awareness"
                 ],
                 "Typical Age Range": ["3-4 years", "4-5 years", "5-6 years", "6-7 years"],
                 "Key Skills & Activities": [
@@ -633,39 +640,39 @@ def main():
             progression_df = pd.DataFrame(progression_data)
             st.dataframe(progression_df, use_container_width=True, hide_index=True)
             
-            st.markdown("""
-            #### **🎮 Effective Pre-Reading Activities by Category**
+            st.markdown(f"""
+            #### **{get_material_icon_html('games')} Effective Pre-Reading Activities by Category**
             
-            **🎵 Phonological Awareness Games:**
+            **{get_material_icon_html('music_note')} Phonological Awareness Games:**
             - **Sound Scavenger Hunts**: Find objects that start with target sounds
             - **Rhyme Time**: Daily rhyming songs, poems, and word play
             - **Syllable Clapping**: Rhythmic activities with names, words, and songs
             - **Sound Substitution Games**: Change beginning sounds to make new words
             - **Listening Games**: Identify and discriminate environmental and speech sounds
             
-            **📖 Print Awareness Activities:**
+            **{get_material_icon_html('menu_book')} Print Awareness Activities:**
             - **Environmental Print Exploration**: Road signs, food labels, store names
             - **Book Handling Skills**: Proper orientation, page turning, print direction
             - **Letter Recognition Games**: Alphabet songs, letter hunts, tactile letters
             - **Name Writing Practice**: Starting with child's own name as meaningful text
             - **Print-Rich Environment**: Labels, charts, and books throughout the space
             
-            **📝 Early Writing Development:**
+            **{get_material_icon_html('edit')} Early Writing Development:**
             - **Scribbling and Drawing**: Developing fine motor control and print concepts
             - **Letter Formation Practice**: Multi-sensory approaches to letter shapes
             - **Story Dictation**: Child tells stories while adult writes them down
             - **Interactive Writing**: Shared writing experiences with adult support
-            """)
+            """, unsafe_allow_html=True)
 
-    elif content_type == "📚 Academic Resources Library":
-        st.markdown("## 📚 Comprehensive Academic Resource Library")
+    elif content_type == f"Academic Resources Library":
+        st.markdown(f"## {get_material_icon_html('library_books')} Comprehensive Academic Resource Library", unsafe_allow_html=True)
         
         # Add academic resources animation
         resources_col = st.columns([1, 2, 1])
         with resources_col[1]:
-            st.markdown("**📚 Evidence-Based Resource Collection**")
+            st.markdown(f"**{get_material_icon_html('library_books')} Evidence-Based Resource Collection**", unsafe_allow_html=True)
             render_lottie(
-                "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gM.json",
+                "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gn.json",
                 height=250,
                 key="academic_resources_focus",
                 fallback_icon="library_books",
@@ -674,13 +681,13 @@ def main():
             st.caption("Curated collection of research-based educational materials and tools")
         
         resource_category = st.selectbox(
-            "📂 Select resource category:",
-            ["📄 Research Articles & Studies", "📋 Best Practice Implementation Guides", "🛠️ Intervention Programs & Curricula", "📊 Assessment Tools & Instruments"],
+            f"Select resource category:",
+            [f"Research Articles & Studies", f"Best Practice Implementation Guides", f"Intervention Programs & Curricula", f"Assessment Tools & Instruments"],
             key="academic_resource_category_selector"
         )
         
-        if resource_category == "📄 Research Articles & Studies":
-            st.markdown("### 🔬 Essential Research Articles & Studies")
+        if resource_category == f"{get_material_icon_html('article')} Research Articles & Studies":
+            st.markdown(f"### {get_material_icon_html('science')} Essential Research Articles & Studies", unsafe_allow_html=True)
             
             articles = [
                 {
@@ -726,7 +733,7 @@ def main():
             ]
             
             for article in articles:
-                with st.expander(f"📄 {article['Title']} ({article['Year']})"):
+                with st.expander(f"{article['Title']} ({article['Year']})"):
                     col1, col2 = st.columns(2)
                     
                     with col1:
@@ -741,13 +748,13 @@ def main():
                     
                     st.write(f"**Full Citation:** {article['Citation']}")
 
-    elif content_type == "💻 Technology Tools & Platforms":
-        st.markdown("## 💻 Technology Tools for Learning Support")
+    elif content_type == f"Technology Tools & Platforms":
+        st.markdown(f"## {get_material_icon_html('computer')} Technology Tools for Learning Support", unsafe_allow_html=True)
         
         # Add technology tools animation
         tech_col = st.columns([1, 2, 1])
         with tech_col[1]:
-            st.markdown("**💻 Educational Technology Solutions**")
+            st.markdown(f"**{get_material_icon_html('computer')} Educational Technology Solutions**", unsafe_allow_html=True)
             render_lottie(
                 "https://lottie.host/5940ae0a-4ef4-4f79-a517-abce94639765/H8tXMAPaUk.json",
                 height=250,
@@ -757,14 +764,21 @@ def main():
             )
             st.caption("Cutting-edge tools to enhance learning and accessibility")
         
-        tool_category = st.selectbox(
-            "🛠️ Select technology category:",
-            ["📖 Reading Support Tools", "✍️ Writing Assistance Software", "🔢 Mathematics Applications", "📱 Organization & Executive Function Apps", "🗣️ Communication & Language Tools"],
-            key="tool_category_selector"
-        )
+            tool_category = st.selectbox(
+                "Select technology category:",
+                [
+                    "Reading Support Tools",
+                    "Writing Assistance Software",
+                    "Mathematics Applications",
+                    "Organization & Executive Function Apps",
+                    "Communication & Language Tools"
+                ],
+                key="tool_category_selector"
+            )
+
         
-        if tool_category == "📖 Reading Support Tools":
-            st.markdown("#### 📖 Advanced Reading Support Technologies")
+        if tool_category == f"{get_material_icon_html('menu_book')} Reading Support Tools":
+            st.markdown(f"#### {get_material_icon_html('menu_book')} Advanced Reading Support Technologies", unsafe_allow_html=True)
             
             reading_tools = [
                 {
@@ -802,7 +816,7 @@ def main():
             ]
             
             for tool in reading_tools:
-                with st.expander(f"🛠️ {tool['Tool']}"):
+                with st.expander(f"{tool['Tool']}"):
                     col1, col2 = st.columns(2)
                     
                     with col1:
@@ -815,14 +829,14 @@ def main():
                         st.write(f"**Implementation Strategy:** {tool['Implementation']}")
 
     else:  # Support Strategies & Best Practices
-        st.markdown("## 🤝 Support Strategies for Educational Stakeholders")
+        st.markdown(f"## {get_material_icon_html('handshake')} Support Strategies for Educational Stakeholders", unsafe_allow_html=True)
         
         # Add support strategies animation
         support_col = st.columns([1, 2, 1])
         with support_col[1]:
-            st.markdown("**🤝 Collaborative Support Strategies**")
+            st.markdown(f"**{get_material_icon_html('handshake')} Collaborative Support Strategies**", unsafe_allow_html=True)
             render_lottie(
-                "https://lottie.host/15c1c3e6-35bf-4933-bc7e-193fa1580efe/iwAfN5QwfZ.json",
+                "https://lottie.host/15c1c3e6-35bf-4933-bc7e-193fa1580efe/iwAfN5Qwfz.json",
                 height=250,
                 key="support_strategies_focus",
                 fallback_icon="groups",
@@ -830,53 +844,59 @@ def main():
             )
             st.caption("Building strong support systems for every learner's success")
         
-        stakeholder = st.selectbox(
-            "👥 Select stakeholder group:",
-            ["👩‍🏫 Teachers & Educators", "👨‍👩‍👧‍👦 Parents & Families", "🏢 Administrators & Leaders", "🎓 Students & Self-Advocacy"],
-            key="stakeholder_selector"
-        )
+            stakeholder = st.selectbox(
+                "Select stakeholder group:",
+                [
+                    "Teachers & Educators",
+                    "Parents & Families",
+                    "Administrators & Leaders",
+                    "Students & Self-Advocacy"
+                ],
+                key="stakeholder_selector"
+            )
+
         
-        if stakeholder == "👩‍🏫 Teachers & Educators":
-            st.markdown("""
-            #### **🎯 Classroom Implementation Strategies**
+        if stakeholder == f"{get_material_icon_html('school')} Teachers & Educators":
+            st.markdown(f"""
+            #### **{get_material_icon_html('target')} Classroom Implementation Strategies**
             
-            **📚 Daily Teaching Practices:**
+            **{get_material_icon_html('library_books')} Daily Teaching Practices:**
             - **Universal Design for Learning (UDL)**: Provide multiple means of representation, engagement, and expression
             - **Explicit Instruction Model**: Clear learning objectives, systematic teaching, guided practice, independent application
             - **Multi-sensory Teaching Approaches**: Incorporate visual, auditory, kinesthetic, and tactile learning modalities
             - **Differentiated Instruction**: Adjust content, process, product, and learning environment based on student needs
             - **Regular Progress Monitoring**: Use frequent, brief assessments to track student learning and adjust instruction
             
-            **📋 Lesson Planning Essentials:**
+            **{get_material_icon_html('checklist')} Lesson Planning Essentials:**
             - Incorporate evidence-based teaching strategies and interventions
             - Plan for various learning styles and ability levels within the same lesson
             - Prepare accommodations and modifications in advance
             - Build in multiple opportunities for practice and reinforcement
             - Include both formative and summative assessment opportunities
-            """)
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### ✅ Daily Teaching Excellence Checklist")
+            st.markdown(f"#### {get_material_icon_html('check_circle')} Daily Teaching Excellence Checklist", unsafe_allow_html=True)
             
             checklist_categories = {
-                "🎯 Learning Objectives & Instruction": [
+                f"Learning Objectives & Instruction": [
                     "Clear, measurable learning objectives posted and explained to students",
                     "Multi-sensory instruction techniques incorporated into lessons",
                     "Explicit instruction model followed (I do, We do, You do)",
                     "Real-world connections and relevance established"
                 ],
-                "🤝 Student Engagement & Support": [
+                f"Student Engagement & Support": [
                     "Students given meaningful choices in activities, materials, or demonstration methods",
                     "Progress monitored and specific feedback provided to students",
                     "Accommodations and modifications implemented seamlessly",
                     "Positive reinforcement and encouragement given frequently"
                 ],
-                "📚 Instructional Delivery": [
+                f"Instructional Delivery": [
                     "Instructions broken into clear, manageable steps",
                     "Visual supports and graphic organizers available and utilized",
                     "Multiple opportunities for practice and application provided",
                     "Student understanding checked frequently throughout lesson"
                 ],
-                "🌟 Classroom Environment": [
+                f"Classroom Environment": [
                     "Inclusive, supportive classroom culture maintained",
                     "Student strengths highlighted and celebrated",
                     "Mistakes treated as learning opportunities",
@@ -889,26 +909,26 @@ def main():
                 for item in items:
                     st.checkbox(item, key=f"teacher_checklist_{item}")
         
-        elif stakeholder == "👨‍👩‍👧‍👦 Parents & Families":
-            st.markdown("""
-            #### **🏠 Creating a Supportive Home Learning Environment**
+        elif stakeholder == f"{get_material_icon_html('family_restroom')} Parents & Families":
+            st.markdown(f"""
+            #### **{get_material_icon_html('home')} Creating a Supportive Home Learning Environment**
             
-            **🌟 Foundation Strategies:**
+            **{get_material_icon_html('star')} Foundation Strategies:**
             - **Consistent Routines**: Establish predictable daily schedules for homework, reading, and family time
             - **Organized Learning Space**: Create a quiet, well-lit, distraction-free area for studying and homework
             - **Growth Mindset Culture**: Celebrate effort, progress, and learning from mistakes rather than just final outcomes
             - **Open Communication**: Maintain regular, positive communication with teachers and school staff
             - **Strength-Based Approach**: Identify and build upon your child's unique talents and interests
             
-            **📖 Academic Support at Home:**
+            **{get_material_icon_html('menu_book')} Academic Support at Home:**
             - **Reading Together**: Make daily reading a family priority, regardless of your child's independent reading level
             - **Homework Support**: Break assignments into manageable chunks, provide breaks, use visual timers
             - **Learning Through Play**: Use games, cooking, and everyday activities to reinforce academic concepts
             - **Technology Balance**: Set appropriate limits on recreational screen time while leveraging educational technology
             - **Real-World Learning**: Connect school learning to everyday experiences and family activities
-            """)
+            """, unsafe_allow_html=True)
             
-            st.markdown("#### 📚 Evidence-Based Parent Resources")
+            st.markdown(f"#### {get_material_icon_html('library_books')} Evidence-Based Parent Resources", unsafe_allow_html=True)
             
             parent_resources = [
                 {
@@ -942,7 +962,7 @@ def main():
             ]
             
             for resource in parent_resources:
-                with st.expander(f"🔗 {resource['Resource']}"):
+                with st.expander(f"{resource['Resource']}"):
                     col1, col2 = st.columns(2)
                     
                     with col1:
@@ -955,87 +975,87 @@ def main():
 
     # Enhanced help and support section
     st.markdown("---")
-    st.markdown("### 💡 Additional Resources & Support")
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Additional Resources & Support", unsafe_allow_html=True)
     
     support_col1, support_col2 = st.columns(2)
     
     with support_col1:
-        st.markdown("""
-        **🔗 Professional Development & Training:**
+        st.markdown(f"""
+        **{get_material_icon_html('link')} Professional Development & Training:**
         - [Orton-Gillingham Training](/#) - Structured literacy certification programs
         - [Wilson Language Training](/#) - Multi-sensory reading program certification
         - [International Literacy Association](/#) - Research-based literacy resources
         - [Council for Exceptional Children](/#) - Special education professional development
-        """)
+        """, unsafe_allow_html=True)
         
-        st.markdown("""
-        **📊 Assessment & Screening Tools:**
+        st.markdown(f"""
+        **{get_material_icon_html('analytics')} Assessment & Screening Tools:**
         - [DIBELS Assessment](/#) - Dynamic Indicators of Basic Early Literacy Skills
         - [AIMSweb Screening](/#) - Universal screening and progress monitoring
         - [STAR Assessments](/#) - Computer-adaptive reading and math assessments
         - [Phonological Awareness Literacy Screening (PALS)](/#) - Comprehensive literacy assessment
-        """)
+        """, unsafe_allow_html=True)
     
     with support_col2:
-        st.markdown("""
-        **🏫 Educational Organizations & Resources:**
+        st.markdown(f"""
+        **{get_material_icon_html('school')} Educational Organizations & Resources:**
         - [National Center on Improving Literacy](/#) - Federal literacy research center
         - [What Works Clearinghouse](/#) - Evidence-based education practices
         - [Center on Multi-Tiered System of Supports](/#) - MTSS implementation resources
         - [National Association of Elementary School Principals](/#) - Leadership resources
-        """)
+        """, unsafe_allow_html=True)
         
-        st.markdown("""
-        **📞 Technical Support & Assistance:**
+        st.markdown(f"""
+        **{get_material_icon_html('phone')} Technical Support & Assistance:**
         - **Help Desk:** support@eduscan.edu
         - **Phone Support:** (555) 123-4567
         - **Live Chat:** Available Monday-Friday, 8 AM - 6 PM EST
         - **Training Webinars:** Weekly sessions on implementation strategies
-        """)
+        """, unsafe_allow_html=True)
     
     # What's new section
     st.markdown("---")
-    st.markdown("### 🆕 Latest Updates & Additions")
+    st.markdown(f"### {get_material_icon_html('new_releases')} Latest Updates & Additions", unsafe_allow_html=True)
     
     updates_col1, updates_col2 = st.columns(2)
     
     with updates_col1:
-        st.markdown("""
-        **🔬 Recently Added Research:**
+        st.markdown(f"""
+        **{get_material_icon_html('science')} Recently Added Research:**
         - Updated meta-analysis on reading intervention effectiveness (March 2024)
         - New studies on executive function development and academic achievement
         - Latest findings on technology-enhanced learning for students with disabilities
         - Cultural and linguistic diversity in special education research updates
-        """)
+        """, unsafe_allow_html=True)
     
     with updates_col2:
-        st.markdown("""
-        **🛠️ New Tools & Resources:**
+        st.markdown(f"""
+        **{get_material_icon_html('build')} New Tools & Resources:**
         - Enhanced digital accessibility toolkit for educators
         - Updated parent communication templates and guides
         - New professional development modules on trauma-informed practices
         - Expanded multilingual resources for diverse families
-        """)
+        """, unsafe_allow_html=True)
     
     # Call to action
     st.markdown("---")
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
          border-radius: 16px; color: white; margin: 2rem 0;">
-        <h3>🚀 Ready to Make a Difference?</h3>
+        <h3>{get_material_icon_html('rocket_launch')} Ready to Make a Difference?</h3>
         <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">
             Join thousands of educators, parents, and administrators using evidence-based practices 
             to support every learner's success.
         </p>
         <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
             <div style="background: rgba(255,255,255,0.2); padding: 0.8rem 1.5rem; border-radius: 8px;">
-                <strong>📧 Newsletter Signup</strong>
+                <strong>{get_material_icon_html('mail')} Newsletter Signup</strong>
             </div>
             <div style="background: rgba(255,255,255,0.2); padding: 0.8rem 1.5rem; border-radius: 8px;">
-                <strong>🎓 Professional Development</strong>
+                <strong>{get_material_icon_html('school')} Professional Development</strong>
             </div>
             <div style="background: rgba(255,255,255,0.2); padding: 0.8rem 1.5rem; border-radius: 8px;">
-                <strong>🤝 Community Forum</strong>
+                <strong>{get_material_icon_html('handshake')} Community Forum</strong>
             </div>
         </div>
     </div>

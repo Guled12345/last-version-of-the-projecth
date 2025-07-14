@@ -1,4 +1,5 @@
-# pages/01_Prediction.py - Enhanced with Improved Animations and UI
+# pages/01_Prediction.py - Enhanced with Material Icons
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -240,7 +241,7 @@ def display_recommendations(risk_level, student_data):
     """Display personalized recommendations based on risk level"""
     
     if "Low" in risk_level:
-        st.markdown(f"✅ **Low Risk** - Continue current support strategies", unsafe_allow_html=True)
+        st.markdown(f"{get_material_icon_html('check_circle')} **Low Risk** - Continue current support strategies", unsafe_allow_html=True)
         recommendations = [
             "Maintain current learning pace and methods",
             "Continue regular progress monitoring",
@@ -249,7 +250,7 @@ def display_recommendations(risk_level, student_data):
         ]
         color = "#10b981"
     elif "Medium" in risk_level:
-        st.markdown(f"⚠️ **Medium Risk** - Targeted interventions recommended", unsafe_allow_html=True)
+        st.markdown(f"{get_material_icon_html('warning')} **Medium Risk** - Targeted interventions recommended", unsafe_allow_html=True)
         recommendations = [
             "Implement targeted interventions in lower-performing areas",
             "Increase frequency of progress monitoring",
@@ -259,7 +260,7 @@ def display_recommendations(risk_level, student_data):
         ]
         color = "#f59e0b"
     else:
-        st.markdown(f"🚨 **High Risk** - Intensive intervention required", unsafe_allow_html=True)
+        st.markdown(f"{get_material_icon_html('priority_high')} **High Risk** - Intensive intervention required", unsafe_allow_html=True)
         recommendations = [
             "Initiate comprehensive assessment by learning specialists",
             "Implement intensive intervention strategies",
@@ -270,7 +271,7 @@ def display_recommendations(risk_level, student_data):
         ]
         color = "#ef4444"
     
-    st.markdown("### 💡 Personalized Recommendations")
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Personalized Recommendations", unsafe_allow_html=True)
     for i, rec in enumerate(recommendations, 1):
         st.write(f"{i}. {rec}")
 
@@ -290,13 +291,13 @@ def main():
     )
     
     # Enhanced hero section with multiple animations
-    st.markdown("### 🌟 Empowering Student Success Through Data-Driven Assessment")
+    st.markdown(f"### {get_material_icon_html('star')} Empowering Student Success Through Data-Driven Assessment", unsafe_allow_html=True)
     
     # Three-column animation layout
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("**📊 Data Analysis**")
+        st.markdown(f"**{get_material_icon_html('analytics')} Data Analysis**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/c5d32643-1965-4071-981e-d2ab6e40f0f7/cIUo7cX9X9.json",
             height=180,
@@ -307,7 +308,7 @@ def main():
         st.caption("Advanced analytics for student assessment")
     
     with col2:
-        st.markdown("**🎯 Learning Success**")
+        st.markdown(f"**{get_material_icon_html('target')} Learning Success**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/c5dfa88a-8138-4928-9a9c-8f810f30419c/v5EB8t0KVf.json",
             height=180,
@@ -318,7 +319,7 @@ def main():
         st.caption("Celebrating educational achievements")
     
     with col3:
-        st.markdown("**🔬 Evidence-Based Methods**")
+        st.markdown(f"**{get_material_icon_html('science')} Evidence-Based Methods**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gn.json",
             height=180,
@@ -330,7 +331,7 @@ def main():
 
     # Enhanced sidebar for prediction options
     with st.sidebar:
-        st.markdown("### 🎯 Assessment Options")
+        st.markdown(f"### {get_material_icon_html('target')} Assessment Options", unsafe_allow_html=True)
         
         available_prediction_types = ["Individual Student Assessment", "Batch Student Upload", "Historical Data Analysis"]
         user_role = get_user_role()
@@ -342,35 +343,50 @@ def main():
         )
         
         # Enhanced model information panel
-        st.markdown("### 🤖 AI Model Information")
-        st.info("""
-        **Assessment Model Details**
-        
-        - **Type**: Random Forest Classifier
-        - **Input Features**: 6 key learning indicators  
-        - **Data Processing**: Standardized scoring
-        - **Optimization**: Grid search validated
-        - **Status**: ✅ Ready for assessments
-        """)
+        st.markdown(f"### {get_material_icon_html('smart_toy')} AI Model Information", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="border-left: 6px solid #1f77b4; background-color: #eaf4fc; padding: 1rem; border-radius: 5px;">
+            <strong>Assessment Model Details</strong><br><br>
+            <ul>
+                <li><strong>Type</strong>: Random Forest Classifier</li>
+                <li><strong>Input Features</strong>: 6 key learning indicators</li>  
+                <li><strong>Data Processing</strong>: Standardized scoring</li>
+                <li><strong>Optimization</strong>: Grid search validated</li>
+                <li><strong>Status</strong>: {get_material_icon_html('check_circle')} Ready for assessments</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
         
         # Show model features with icons
-        st.markdown("**📋 Assessment Criteria:**")
+        st.markdown(f"**{get_material_icon_html('checklist')} Assessment Criteria:**", unsafe_allow_html=True)
+
         features = [
-            "📊 Mathematics Score (0-100%)",
-            "📖 Reading Comprehension (0-100%)", 
-            "✍️ Writing Skills (0-100%)",
-            "📅 School Attendance Rate (%)",
-            "🎭 Classroom Behavior (1-5 scale)",
-            "📚 Literacy Development (1-10 scale)"
+            f"{get_material_icon_html('calculate')} Mathematics Score (0-100%)",
+            f"{get_material_icon_html('menu_book')} Reading Comprehension (0-100%)", 
+            f"{get_material_icon_html('edit')} Writing Skills (0-100%)",
+            f"{get_material_icon_html('calendar_today')} School Attendance Rate (%)",
+            f"{get_material_icon_html('psychology')} Classroom Behavior (1-5 scale)",
+            f"{get_material_icon_html('library_books')} Literacy Development (1-10 scale)"
         ]
+
         for feature in features:
-            st.markdown(f"• {feature}")
+            st.markdown(f"• {feature}", unsafe_allow_html=True)
+
             
-        st.success("✅ AI model ready for student assessments")
+        st.markdown(
+            f"""
+            <div style="background-color: rgba(40,167,69,0.1); padding: 1rem; border-left: 5px solid #28a745; border-radius: 4px; color: #155724;">
+                {get_material_icon_html('check_circle')} AI model ready for student assessments
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
         
         uploaded_file = None
         if "Batch" in prediction_type:
-            st.markdown("#### 📁 Upload Student Data")
+            st.markdown(f"#### {get_material_icon_html('folder')} Upload Student Data", unsafe_allow_html=True)
             uploaded_file = st.file_uploader(
                 "Upload CSV file with student data",
                 type=['csv'],
@@ -382,7 +398,7 @@ def main():
     if prediction_type == "Individual Student Assessment":
         reset_counter = st.session_state.get('reset_counter', 0)
         
-        st.markdown("""
+        st.markdown(f"""
         <div class="input-section section-animated-text">
             <h2 class="highlight-text">Student Learning Assessment Form</h2>
             <p style="font-size: 1.1em; margin-bottom: 2rem; color: var(--gray-700);">
@@ -394,9 +410,9 @@ def main():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("""
+            st.markdown(f"""
             <div class="input-section">
-                <h3 class="highlight-text">📊 Academic Performance Scores</h3>
+                <h3 class="highlight-text">{get_material_icon_html('analytics')} Academic Performance Scores</h3>
             </div>
             """, unsafe_allow_html=True)
             math_score = st.number_input("Mathematics Score (%)", min_value=0, max_value=100, value=75, step=1, 
@@ -407,9 +423,9 @@ def main():
                                           help="Student's written expression and composition skills", key=f"writing_score_input_{reset_counter}")
             
         with col2:
-            st.markdown("""
+            st.markdown(f"""
             <div class="input-section">
-                <h3 class="highlight-text">🎭 Behavioral & Social Indicators</h3>
+                <h3 class="highlight-text">{get_material_icon_html('psychology')} Behavioral & Social Indicators</h3>
             </div>
             """, unsafe_allow_html=True)
             attendance = st.slider("School Attendance Rate (%)", 0, 100, 85, 
@@ -423,9 +439,9 @@ def main():
                                                 help="Assess the student's reading and literacy development stage", key=f"literacy_slider_{reset_counter}")
             literacy = int(literacy_selection.split(' ')[0])
         
-        st.markdown("""
+        st.markdown(f"""
         <div class="input-section">
-            <h3 class="highlight-text">👤 Student Information</h3>
+            <h3 class="highlight-text">{get_material_icon_html('person')} Student Information</h3>
         </div>
         """, unsafe_allow_html=True)
         
@@ -442,13 +458,13 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            predict_button = st.button("🧠 Analyze Learning Risk", type="primary", use_container_width=True)
+            predict_button = st.button("Analyze Learning Risk", type="primary", use_container_width=True, )
         
         with col2:
-            reset_button = st.button("🔄 Clear All Fields", use_container_width=True)
+            reset_button = st.button("Clear All Fields", use_container_width=True)
         
         with col3:
-            save_button = st.button("💾 Save Assessment Data", use_container_width=True)
+            save_button = st.button("Save Assessment Data", use_container_width=True)
         
         if reset_button:
             all_keys = list(st.session_state.keys())
@@ -462,7 +478,15 @@ def main():
                 st.session_state['reset_counter'] = 0
             st.session_state['reset_counter'] += 1
             
-            st.success("✅ Form completely reset! Ready for new student assessment.")
+            st.markdown(
+                f"""
+                <div style="background-color: rgba(40,167,69,0.1); padding: 1rem; border-left: 5px solid #28a745; border-radius: 4px; color: #155724;">
+                    {get_material_icon_html('check_circle')} Form completely reset! Ready for new student assessment.
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
             st.rerun()
         
         show_results = st.session_state.get('show_prediction_results', False)
@@ -471,7 +495,14 @@ def main():
             errors = validate_inputs(math_score, reading_score, writing_score, attendance, behavior, literacy)
             
             if errors:
-                st.error("❌ Please correct the following errors:")
+                st.markdown(
+                    f"""
+                    <div style="background-color: rgba(220,53,69,0.1); padding: 1rem; border-left: 5px solid #dc3545; border-radius: 4px; color: #721c24;">
+                        {get_material_icon_html('error')} <strong>Please correct the following errors:</strong>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 for error in errors:
                     st.write(f"• {error}")
             else:
@@ -498,7 +529,7 @@ def main():
                     }
                     
                     # Enhanced results display
-                    st.markdown("""
+                    st.markdown(f"""
                     <div class="results-section">
                         <h2 class="highlight-text">AI Assessment Results</h2>
                         <p style="font-size: 1.2em; text-align: center; color: var(--gray-700); margin-bottom: 2rem;">
@@ -511,16 +542,27 @@ def main():
                     if prediction_prob < 0.3:
                         risk_level = "Low Risk"
                         risk_color = "#10b981"
-                        risk_icon = "✅"
+                        risk_icon = get_material_icon_html('check_circle')
                     elif prediction_prob < 0.7:
                         risk_level = "Medium Risk"
                         risk_color = "#f59e0b"
-                        risk_icon = "⚠️"
+                        risk_icon = get_material_icon_html('warning')
                     else:
                         risk_level = "High Risk"
                         risk_color = "#ef4444"
-                        risk_icon = "🚨"
-                    
+                        risk_icon = get_material_icon_html('priority_high')
+                    # st.markdown(f"""
+                    #     <div style="padding: 1.5rem; border-radius: 8px; border: 2px solid {risk_color}; background-color: rgba(0,0,0,0.03); text-align: center;">
+                    #         <div style="font-size: 2rem; color: {risk_color};">
+                    #             {risk_icon}
+                    #         </div>
+                    #         <h3 style="margin-top: 0.5rem; color: {risk_color};">{risk_level}</h3>
+                    #         <p style="color: var(--text-color); font-size: 1.1em;">
+                    #             Confidence Score: <strong>{round(prediction_prob)}%</strong>
+                    #         </p>
+                    #     </div>
+                    # """, unsafe_allow_html=True)
+
                     # Risk level display with animation
                     st.markdown(f"""
                     <div style="text-align: center; background: linear-gradient(135deg, {risk_color}20, {risk_color}30); 
@@ -536,19 +578,19 @@ def main():
                         animation_url = get_risk_animation_url(prediction_prob)
                         
                         if prediction_prob < 0.3:
-                            st.markdown("**🎉 Excellent Progress - Continue Current Path**")
+                            st.markdown(f"**{get_material_icon_html('celebration')} Excellent Progress - Continue Current Path**", unsafe_allow_html=True)
                         elif prediction_prob < 0.7:
-                            st.markdown("**⚠️ Attention Needed - Targeted Support Recommended**")
+                            st.markdown(f"**{get_material_icon_html('warning')} Attention Needed - Targeted Support Recommended**", unsafe_allow_html=True)
                         else:
-                            st.markdown("**🚨 Immediate Action - Comprehensive Intervention Required**")
+                            st.markdown(f"**{get_material_icon_html('priority_high')} Immediate Action - Comprehensive Intervention Required**", unsafe_allow_html=True)
                         
-                        render_lottie(
-                            animation_url,
-                            height=250,
-                            key=f"risk_result_{prediction_prob}",
-                            fallback_icon="psychology" if prediction_prob >= 0.7 else "warning" if prediction_prob >= 0.3 else "celebration",
-                            fallback_text=f"{risk_level} Assessment Result"
-                        )
+                        # render_lottie(
+                        #     animation_url,
+                        #     height=250,
+                        #     key=f"risk_result_{prediction_prob}",
+                        #     fallback_icon="psychology" if prediction_prob >= 0.7 else "warning" if prediction_prob >= 0.3 else "celebration",
+                        #     fallback_text=f"{risk_level} Assessment Result"
+                        # )
                     
                     # Enhanced visualizations
                     fig_gauge, fig_radar = create_risk_visualization(prediction_prob, student_data)
@@ -563,7 +605,7 @@ def main():
                     display_recommendations(risk_level, student_data)
                     
                     # Assessment summary
-                    st.markdown("### 📋 Complete Assessment Summary")
+                    st.markdown(f"### {get_material_icon_html('checklist')} Complete Assessment Summary", unsafe_allow_html=True)
                     summary_data = {
                         "Assessment Area": ["Mathematics", "Reading Comprehension", "Writing Skills", "School Attendance", 
                                           "Classroom Behavior", "Literacy Development", "Overall Risk Level", "AI Confidence"],
@@ -572,7 +614,7 @@ def main():
                     }
                     st.dataframe(pd.DataFrame(summary_data), use_container_width=True, hide_index=True)
                     
-                    if st.button("💾 Save This Assessment", key=f"save_button_after_predict_{reset_counter}"):
+                    if st.button("Save This Assessment", key=f"save_button_after_predict_{reset_counter}"):
                         prediction_record = {
                             "timestamp": datetime.now().isoformat(),
                             "student_name": student_name,
@@ -584,29 +626,29 @@ def main():
                             **student_data
                         }
                         save_prediction_data(prediction_record)
-                        st.success("✅ Assessment saved successfully to database!")
+                        st.success("Assessment saved successfully to database!")
                 
                 except Exception as e:
-                    st.error(f"❌ Error processing assessment: {str(e)}")
-                    st.info("ℹ️ Note: Using demonstration model. Please ensure your trained model file is properly configured.")
+                    st.error("Error processing assessment: {str(e)}")
+                    st.info("Note: Using demonstration model. Please ensure your trained model file is properly configured.")
 
     elif prediction_type == "Batch Student Upload":
         if uploaded_file is not None:
             try:
                 df = pd.read_csv(uploaded_file)
-                st.success(f"✅ Successfully uploaded file with {len(df)} student records")
+                st.success("Successfully uploaded file with {len(df)} student records")
                 
                 required_columns = ['math_score', 'reading_score', 'writing_score', 'attendance', 'behavior', 'literacy']
                 missing_columns = [col for col in required_columns if col not in df.columns]
                 
                 if missing_columns:
-                    st.error(f"❌ Missing required columns: {', '.join(missing_columns)}")
-                    st.info("💡 Required columns: math_score, reading_score, writing_score, attendance, behavior, literacy")
+                    st.error("Missing required columns: {', '.join(missing_columns)}")
+                    st.info("Required columns: math_score, reading_score, writing_score, attendance, behavior, literacy")
                 else:
-                    st.markdown("### 📊 Data Preview")
+                    st.markdown(f"### {get_material_icon_html('analytics')} Data Preview", unsafe_allow_html=True)
                     st.dataframe(df.head())
                     
-                    if st.button("🚀 Process Batch Assessments", key="process_batch_predictions_button"):
+                    if st.button("Process Batch Assessments", key="process_batch_predictions_button"):
                         progress_bar = st.progress(0)
                         st.markdown("**Processing student assessments...**")
                         results = []
@@ -632,10 +674,10 @@ def main():
                                 progress_bar.progress((idx + 1) / len(df))
                             
                             except Exception as e:
-                                st.error(f"❌ Error processing student {idx + 1}: {str(e)}")
+                                st.error("Error processing student {idx + 1}: {str(e)}")
                         
                         results_df = pd.DataFrame(results)
-                        st.markdown("### 📈 Batch Assessment Results")
+                        st.markdown(f"### {get_material_icon_html('trending_up')} Batch Assessment Results", unsafe_allow_html=True)
                         st.dataframe(results_df)
                         
                         # Enhanced visualization
@@ -647,7 +689,7 @@ def main():
                         
                         csv = results_df.to_csv(index=False)
                         st.download_button(
-                            label="📥 Download Assessment Results",
+                            label=f"Download Assessment Results",
                             data=csv,
                             file_name=f"student_risk_assessments_{datetime.now().strftime('%Y%m%d')}.csv",
                             mime="text/csv",
@@ -655,13 +697,13 @@ def main():
                         )
             
             except Exception as e:
-                st.error(f"❌ Error reading file: {str(e)}")
-                st.info("💡 Please ensure your CSV file is properly formatted with the required columns.")
+                st.error(f"Error reading file: {str(e)}")
+                st.info(f"Please ensure your CSV file is properly formatted with the required columns.")
         else:
-            st.info("📁 Please upload a CSV file to begin batch processing")
+            st.info(f"Please upload a CSV file to begin batch processing")
             
             # Show sample CSV format
-            st.markdown("### 📋 Sample CSV Format")
+            st.markdown(f"### {get_material_icon_html('checklist')} Sample CSV Format", unsafe_allow_html=True)
             sample_data = pd.DataFrame({
                 'math_score': [85, 72, 93],
                 'reading_score': [78, 65, 89],
@@ -673,7 +715,7 @@ def main():
             st.dataframe(sample_data)
     
     else:  # Historical Data Analysis
-        st.markdown("### 📊 Historical Assessment Analysis")
+        st.markdown(f"### {get_material_icon_html('analytics')} Historical Assessment Analysis", unsafe_allow_html=True)
         historical_data = load_student_data()
         
         if historical_data:
@@ -711,7 +753,7 @@ def main():
             filtered_data = df_historical[df_historical['timestamp'] >= cutoff]
             
             if analysis_type == "Risk Trends Over Time":
-                st.markdown("#### 📈 Risk Level Trends Analysis")
+                st.markdown(f"#### {get_material_icon_html('trending_up')} Risk Level Trends Analysis", unsafe_allow_html=True)
                 
                 if 'risk_level' in filtered_data.columns:
                     daily_risks = filtered_data.groupby([filtered_data['timestamp'].dt.date, 'risk_level']).size().unstack(fill_value=0)
@@ -742,10 +784,10 @@ def main():
                         high_risk_pct = (risk_distribution.get('High Risk', 0) / total_assessments * 100) if total_assessments > 0 else 0
                         st.metric("High Risk Students", f"{high_risk_pct:.1f}%")
                 else:
-                    st.warning("⚠️ No risk level data available for trend analysis")
+                    st.warning(f"No risk level data available for trend analysis")
             
             elif analysis_type == "Performance Correlation Analysis":
-                st.markdown("#### 🔗 Academic Performance Correlation Matrix")
+                st.markdown(f"#### {get_material_icon_html('link')} Academic Performance Correlation Matrix", unsafe_allow_html=True)
                 
                 numeric_cols = ['math_score', 'reading_score', 'writing_score', 'attendance', 'behavior', 'literacy']
                 available_cols = [col for col in numeric_cols if col in filtered_data.columns]
@@ -762,7 +804,7 @@ def main():
                     st.plotly_chart(fig_heatmap, use_container_width=True)
                     
                     # Insights
-                    st.markdown("#### 💡 Key Insights")
+                    st.markdown(f"#### {get_material_icon_html('lightbulb')} Key Insights", unsafe_allow_html=True)
                     strong_correlations = []
                     for i in range(len(corr_matrix.columns)):
                         for j in range(i+1, len(corr_matrix.columns)):
@@ -780,10 +822,10 @@ def main():
                     else:
                         st.info("No strong correlations (>0.6) found between performance indicators")
                 else:
-                    st.warning("⚠️ Insufficient numeric data for correlation analysis")
+                    st.warning(f"Insufficient numeric data for correlation analysis")
             
             elif analysis_type == "Individual Student Progress":
-                st.markdown("#### 👤 Individual Student Progress Tracking")
+                st.markdown(f"#### {get_material_icon_html('person')} Individual Student Progress Tracking", unsafe_allow_html=True)
                 
                 if 'student_name' in filtered_data.columns:
                     student_names = filtered_data['student_name'].dropna().unique()
@@ -814,7 +856,7 @@ def main():
                                     col1, col2 = st.columns(2)
                                     with col1:
                                         risk_change = latest['probability'] - previous['probability']
-                                        trend = "📈 Increasing" if risk_change > 0.05 else "📉 Decreasing" if risk_change < -0.05 else "➡️ Stable"
+                                        trend = f"{get_material_icon_html('trending_up')} Increasing" if risk_change > 0.05 else f"{get_material_icon_html('trending_down')} Decreasing" if risk_change < -0.05 else f"{get_material_icon_html('trending_flat')} Stable"
                                         st.metric("Risk Trend", trend, f"{risk_change:+.1%}")
                                     
                                     with col2:
@@ -822,20 +864,20 @@ def main():
                                         st.metric("Days Since Last Assessment", f"{days_between} days")
                                 
                                 # Detailed progress table
-                                st.markdown("#### 📊 Assessment History")
+                                st.markdown(f"#### {get_material_icon_html('analytics')} Assessment History", unsafe_allow_html=True)
                                 progress_display = student_progress[['timestamp', 'math_score', 'reading_score', 'writing_score', 'attendance', 'behavior', 'literacy', 'risk_level', 'probability']].copy()
                                 progress_display['timestamp'] = progress_display['timestamp'].dt.strftime('%Y-%m-%d %H:%M')
                                 progress_display['probability'] = progress_display['probability'].apply(lambda x: f"{x:.1%}")
                                 st.dataframe(progress_display, hide_index=True)
                             else:
-                                st.info("📊 Only one assessment available. Multiple assessments needed for trend analysis.")
+                                st.info(f"Only one assessment available. Multiple assessments needed for trend analysis.")
                     else:
-                        st.warning("⚠️ No student names found in the data")
+                        st.warning(f"No student names found in the data")
                 else:
-                    st.warning("⚠️ Student name data not available")
+                    st.warning(f"Student name data not available")
             
             else:  # Intervention Effectiveness
-                st.markdown("#### 🎯 Intervention Effectiveness Analysis")
+                st.markdown(f"#### {get_material_icon_html('target')} Intervention Effectiveness Analysis", unsafe_allow_html=True)
                 
                 if 'risk_level' in filtered_data.columns and len(filtered_data) > 10:
                     # Analyze risk level changes over time
@@ -852,7 +894,7 @@ def main():
                         st.plotly_chart(fig_monthly, use_container_width=True)
                         
                         # Effectiveness metrics
-                        st.markdown("#### 📈 Intervention Impact Metrics")
+                        st.markdown(f"#### {get_material_icon_html('trending_up')} Intervention Impact Metrics", unsafe_allow_html=True)
                         
                         total_students = len(filtered_data['student_name'].unique()) if 'student_name' in filtered_data.columns else len(filtered_data)
                         high_risk_students = len(filtered_data[filtered_data['risk_level'] == 'High Risk'])
@@ -867,68 +909,68 @@ def main():
                             avg_math_score = filtered_data['math_score'].mean() if 'math_score' in filtered_data.columns else 0
                             st.metric("Average Math Score", f"{avg_math_score:.1f}%")
                     else:
-                        st.info("📊 Insufficient data for monthly trend analysis")
+                        st.info(f"Insufficient data for monthly trend analysis")
                 else:
-                    st.warning("⚠️ Insufficient data for intervention effectiveness analysis")
+                    st.warning(f"Insufficient data for intervention effectiveness analysis")
         else:
-            st.info("📊 No historical data available. Complete some assessments first to enable analysis!")
+            st.info(f"No historical data available. Complete some assessments first to enable analysis!")
             
             # Show sample of what analysis would look like
-            st.markdown("### 🔮 Available After Assessments")
-            st.markdown("""
+            st.markdown(f"### {get_material_icon_html('preview')} Available After Assessments", unsafe_allow_html=True)
+            st.markdown(f"""
             Once you've completed student assessments, you'll be able to:
             
-            - **📈 Track Risk Trends**: Monitor how student risk levels change over time
-            - **🔗 Analyze Correlations**: Understand relationships between different performance factors  
-            - **👤 Individual Progress**: Follow specific students' learning journeys
-            - **🎯 Measure Impact**: Evaluate the effectiveness of interventions
-            """)
+            - **{get_material_icon_html('trending_up')} Track Risk Trends**: Monitor how student risk levels change over time
+            - **{get_material_icon_html('link')} Analyze Correlations**: Understand relationships between different performance factors  
+            - **{get_material_icon_html('person')} Individual Progress**: Follow specific students' learning journeys
+            - **{get_material_icon_html('target')} Measure Impact**: Evaluate the effectiveness of interventions
+            """, unsafe_allow_html=True)
 
     # Enhanced tips section
     st.markdown("---")
-    st.markdown("### 💡 Assessment Best Practices")
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Assessment Best Practices", unsafe_allow_html=True)
     
     tip_col1, tip_col2 = st.columns(2)
     
     with tip_col1:
-        st.markdown("""
-        **🎯 For Accurate Assessments:**
+        st.markdown(f"""
+        **{get_material_icon_html('target')} For Accurate Assessments:**
         - Gather data from multiple sources and timeframes
         - Consider external factors affecting performance
         - Update assessments regularly (monthly recommended)
         - Include qualitative observations in notes
-        """)
+        """, unsafe_allow_html=True)
     
     with tip_col2:
-        st.markdown("""
-        **📊 Using Results Effectively:**
+        st.markdown(f"""
+        **{get_material_icon_html('analytics')} Using Results Effectively:**
         - Use assessments as starting points for deeper evaluation
         - Combine AI insights with professional judgment
         - Track progress over time, not just single assessments
         - Share results with educational support teams
-        """)
+        """, unsafe_allow_html=True)
     
     # Add help and support section
     st.markdown("---")
-    st.markdown("### 🤝 Need Help?")
+    st.markdown(f"### {get_material_icon_html('help')} Need Help?", unsafe_allow_html=True)
     
     help_col1, help_col2 = st.columns(2)
     
     with help_col1:
-        st.markdown("""
-        **📚 Resources:**
+        st.markdown(f"""
+        **{get_material_icon_html('library_books')} Resources:**
         - [Assessment Guidelines](/#) - Best practices for student evaluation
         - [Interpretation Guide](/#) - Understanding risk levels and recommendations  
         - [Intervention Strategies](/#) - Evidence-based support methods
-        """)
+        """, unsafe_allow_html=True)
     
     with help_col2:
-        st.markdown("""
-        **📞 Support:**
+        st.markdown(f"""
+        **{get_material_icon_html('phone')} Support:**
         - Email: support@eduscan.edu
         - Phone: (555) 123-4567
         - Live Chat: Available 8 AM - 6 PM
-        """)
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

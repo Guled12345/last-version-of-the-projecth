@@ -1,4 +1,5 @@
-# pages/02_Teacher_Resources.py - Enhanced with Multiple Animations
+# pages/02_Teacher_Resources.py - Enhanced with Material Icons
+
 import streamlit as st
 import pandas as pd
 import json
@@ -224,13 +225,13 @@ def main():
     )
     
     # Enhanced hero section with multiple animations
-    st.markdown("### 🌟 Professional Excellence in Education")
+    st.markdown(f"### {get_material_icon_html('star')} Professional Excellence in Education",  unsafe_allow_html=True)
     
     # Two-column layout for animations
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**👥 Teacher Collaboration**")
+        st.markdown(f"**{get_material_icon_html('groups')} Teacher Collaboration**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/9dbf9a0f-b1fd-4b92-8215-e595745178d6/iFNBmCDQ5Z.json",
             height=250,
@@ -241,7 +242,7 @@ def main():
         st.caption("Building professional learning communities and collaborative support systems")
     
     with col2:
-        st.markdown("**📚 Innovative Teaching Methods**")
+        st.markdown(f"**{get_material_icon_html('library_books')} Innovative Teaching Methods**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/62286ecf-6779-4781-90a0-c747f05d5f8a/giBjeAZ9o4.json",
             height=250,
@@ -253,7 +254,7 @@ def main():
 
     # Quick Assessment Tools
     st.markdown("---")
-    st.markdown("### 🔍 Quick Assessment Tools")
+    st.markdown(f"### {get_material_icon_html('search')} Quick Assessment Tools", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -269,7 +270,7 @@ def main():
         
         if st.button("Submit Assessment", key="assess_student_btn"):
             if student_name and risk_indicators:
-                st.success(f"✅ Assessment recorded for {student_name}")
+                st.success(f"Assessment recorded for {student_name}")
                 risk_level = "High" if len(risk_indicators) >= 3 else "Medium" if len(risk_indicators) >= 2 else "Low"
                 st.info(f"Recommended Risk Level: **{risk_level}**")
             else:
@@ -290,19 +291,19 @@ def main():
         )
         
         if st.button("Submit Plan", key="create_plan_btn"):
-            st.success("✅ Intervention plan created successfully!")
+            st.success(f"Intervention plan created successfully!")
             
             # Show sample intervention plan
             st.markdown("**Suggested Intervention Plan:**")
             if intervention_type == "Academic Support":
-                st.markdown("""
+                st.markdown(f"""
                 - **Daily**: 15-minute focused skill practice
                 - **Weekly**: Progress assessment and adjustment
                 - **Resources**: Differentiated worksheets, educational games
                 - **Support**: Peer tutoring, teacher check-ins
                 """)
             elif intervention_type == "Behavioral Intervention":
-                st.markdown("""
+                st.markdown(f"""
                 - **Daily**: Behavior tracking chart
                 - **Weekly**: Positive reinforcement system review
                 - **Resources**: Social stories, self-regulation tools
@@ -311,13 +312,13 @@ def main():
 
     # Resource categories with enhanced animations
     st.markdown("---")
-    st.markdown("### 📚 Evidence-Based Intervention Strategies")
+    st.markdown(f"### {get_material_icon_html('library_books')} Evidence-Based Intervention Strategies", unsafe_allow_html=True)
     
     # Two animations for intervention strategies section
     intervention_col1, intervention_col2 = st.columns(2)
     
     with intervention_col1:
-        st.markdown("**🎯 Targeted Intervention Strategies**")
+        st.markdown(f"**{get_material_icon_html('target')} Targeted Intervention Strategies**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/687a0991-917f-4d7b-92f6-d9ecaa0780b7/D75iWs83gm.json",
             height=280,
@@ -328,7 +329,7 @@ def main():
         st.caption("Research-proven strategies for supporting diverse learning needs")
     
     with intervention_col2:
-        st.markdown("**📊 Data-Driven Assessment**")
+        st.markdown(f"**{get_material_icon_html('analytics')} Data-Driven Assessment**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/8a1c9f65-4b8d-4e2f-9a3c-7f6e5d4c3b2a/M4X8jK9wR5.json",
             height=280,
@@ -339,7 +340,7 @@ def main():
         st.caption("Continuous monitoring and data-driven decision making for student success")
 
     # Strategy categories
-    strategy_tabs = st.tabs(["📖 Reading Support", "🔢 Math Interventions", "✍️ Writing Help", "🎭 Behavioral Strategies"])
+    strategy_tabs = st.tabs([f"Reading Support", f"Math Interventions", f"Writing Help", f"Behavioral Strategies"])
     
     with strategy_tabs[0]:  # Reading Support
         st.markdown("#### Proven Reading Intervention Techniques")
@@ -366,7 +367,7 @@ def main():
         ]
         
         for strategy in strategies:
-            with st.expander(f"📖 {strategy['title']}"):
+            with st.expander(f"{strategy['title']}"):
                 st.markdown(f"**Description:** {strategy['description']}")
                 st.markdown(f"**Duration:** {strategy['duration']}")
                 st.markdown(f"**Materials:** {strategy['materials']}")
@@ -390,7 +391,7 @@ def main():
         ]
         
         for strategy in math_strategies:
-            with st.expander(f"🔢 {strategy['title']}"):
+            with st.expander(f"{strategy['title']}"):
                 st.markdown(f"**Description:** {strategy['description']}")
                 st.markdown(f"**Duration:** {strategy['duration']}")
                 st.markdown(f"**Materials:** {strategy['materials']}")
@@ -414,7 +415,7 @@ def main():
         ]
         
         for strategy in writing_strategies:
-            with st.expander(f"✍️ {strategy['title']}"):
+            with st.expander(f"{strategy['title']}"):
                 st.markdown(f"**Description:** {strategy['description']}")
                 st.markdown(f"**Duration:** {strategy['duration']}")
                 st.markdown(f"**Materials:** {strategy['materials']}")
@@ -438,14 +439,14 @@ def main():
         ]
         
         for strategy in behavioral_strategies:
-            with st.expander(f"🎭 {strategy['title']}"):
+            with st.expander(f"{strategy['title']}"):
                 st.markdown(f"**Description:** {strategy['description']}")
                 st.markdown(f"**Duration:** {strategy['duration']}")
                 st.markdown(f"**Materials:** {strategy['materials']}")
 
     # Progress Monitoring Tools
     st.markdown("---")
-    st.markdown("### 📊 Progress Monitoring & Documentation")
+    st.markdown(f"### {get_material_icon_html('analytics')} Progress Monitoring & Documentation", unsafe_allow_html=True)
     
     monitor_col1, monitor_col2 = st.columns(2)
     
@@ -465,7 +466,7 @@ def main():
         
         if st.button("Save Progress Report", key="save_progress"):
             if tracking_student:
-                st.success("✅ Progress report saved successfully!")
+                st.success(f"Progress report saved successfully!")
                 
                 # Display summary
                 st.markdown("**Weekly Summary:**")
@@ -480,31 +481,31 @@ def main():
     with monitor_col2:
         st.markdown("#### Resource Library")
         
-        st.markdown("""
-        **📁 Downloadable Resources:**
+        st.markdown(f"""
+        **{get_material_icon_html('folder')} Downloadable Resources:**
         - Intervention planning templates
         - Progress monitoring forms
         - Parent communication templates
         - Student goal-setting worksheets
         
-        **🔗 External Links:**
+        **{get_material_icon_html('link')} External Links:**
         - Research-based intervention databases
         - Professional development resources
         - Collaboration tools for educators
-        """)
+        """, unsafe_allow_html=True)
         
-        if st.button("📥 Download Resource Pack", key="download_resources"):
-            st.info("📦 Resource pack would be downloaded in a real implementation")
+        if st.button(f"Download Resource Pack", key="download_resources"):
+            st.info(f"Resource pack would be downloaded in a real implementation")
 
     # Interactive Learning Activities Generator
     st.markdown("---")
-    st.markdown("### 🎮 Interactive Learning Activities Generator")
+    st.markdown(f"### {get_material_icon_html('extension')} Interactive Learning Activities Generator", unsafe_allow_html=True)
     
     # Two animations for activity generation section
     activity_anim_col1, activity_anim_col2 = st.columns(2)
     
     with activity_anim_col1:
-        st.markdown("**🎲 Activity Generation Engine**")
+        st.markdown(f"**{get_material_icon_html('casino')} Activity Generation Engine**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/5940ae0a-4ef4-4f79-a517-abce94639765/H8tXMAPaUk.json",
             height=250,
@@ -515,7 +516,7 @@ def main():
         st.caption("Generate customized learning activities for any subject and grade level")
     
     with activity_anim_col2:
-        st.markdown("**🧩 Adaptive Learning Tools**")
+        st.markdown(f"**{get_material_icon_html('tune')} Adaptive Learning Tools**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/15c1c3e6-35bf-4933-bc7e-193fa1580efe/iwAfN5QwfZ.json",
             height=250,
@@ -543,10 +544,10 @@ def main():
                                          ["5-10 minutes", "15-20 minutes", "30+ minutes", "Full lesson"], 
                                          key="act_time_available")
 
-    if st.button("🎯 Generate Custom Activity", key="gen_act_btn", type="primary"):
+    if st.button(f"Generate Custom Activity", key="gen_act_btn", type="primary"):
         activity = generate_activity(difficulty_type_act, grade_level_act)
         
-        st.markdown("### 🎉 Generated Activity")
+        st.markdown(f"### {get_material_icon_html('celebration')} Generated Activity", unsafe_allow_html=True)
         st.info(f"**Activity**: {activity}")
         
         # Customize materials and objectives based on activity type
@@ -568,29 +569,29 @@ def main():
 
         col_mat, col_obj = st.columns(2)
         with col_mat:
-            st.markdown("**📋 Materials Needed:**")
+            st.markdown(f"**{get_material_icon_html('checklist')} Materials Needed:**", unsafe_allow_html=True)
             for material in materials:
                 st.write(f"• {material}")
         with col_obj:
-            st.markdown("**🎯 Learning Objectives:**")
+            st.markdown(f"**{get_material_icon_html('target')} Learning Objectives:**", unsafe_allow_html=True)
             for obj in objectives:
                 st.write(f"• {obj}")
 
     # Help and Support
     st.markdown("---")
-    st.markdown("""
-    ### 💡 Need Additional Support?
+    st.markdown(f"""
+    ### {get_material_icon_html('lightbulb')} Need Additional Support?
     
     **Contact Information:**
-    - 📧 Email: support@eduscan.edu
-    - 📞 Phone: (555) 123-4567
-    - 💬 Chat: Available 8 AM - 5 PM
+    - {get_material_icon_html('mail')} Email: support@eduscan.edu
+    - {get_material_icon_html('phone')} Phone: (555) 123-4567
+    - {get_material_icon_html('chat')} Chat: Available 8 AM - 5 PM
     
     **Training Resources:**
     - Weekly webinars on intervention strategies
     - Professional learning communities
     - Implementation guides and tutorials
-    """)
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

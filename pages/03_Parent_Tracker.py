@@ -1,10 +1,10 @@
-# pages/03_Parent_Tracker.py - Enhanced with Improved Animations and UI
+# pages/03_Parent_Tracker.py - Enhanced with Material Icons
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, date, timedelta
-import json
 import os
 import sys
 
@@ -20,18 +20,13 @@ except ImportError:
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.data_utils import save_parent_observation, load_parent_observations
-from utils.image_base64 import get_base64_images
-from utils.language_utils import get_text, load_app_settings, save_app_settings
+from utils.language_utils import load_app_settings
 from utils.exact_ui import (
     add_exact_ui_styles,
     render_exact_sidebar,
-    render_exact_page_header,
-    custom_alert,
-    create_exact_metric_card,
-    create_exact_chart_container,
-    get_b64_image_html
+    render_exact_page_header
 )
-from utils.auth_utils import is_authenticated, render_login_page, logout_user, get_user_role
+from utils.auth_utils import is_authenticated, get_user_role
 from utils.icon_utils import get_material_icon_html
 
 # Page config
@@ -240,13 +235,13 @@ def main():
     )
     
     # Enhanced hero section with multiple animations
-    st.markdown("### 🌟 Strengthening Home-School Connections")
+    st.markdown(f"###  Strengthening Home-School Connections", unsafe_allow_html=True)
     
     # Three-column animation layout
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("**📊 Progress Tracking**")
+        st.markdown(f"**{get_material_icon_html('track_changes')} Progress Tracking**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/ceff5ec9-b733-44f1-b68e-aa9d6676297d/xGcBHYi1ID.json",
             height=200,
@@ -257,7 +252,7 @@ def main():
         st.caption("Track daily learning activities and behaviors")
     
     with col2:
-        st.markdown("**👨‍👩‍👧‍👦 Family Support**")
+        st.markdown(f"**{get_material_icon_html('diversity_3')} Family Support**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/ed479bf5-36af-4dd8-84f2-f5893f0687f9/Tgc64kKeCO.json",
             height=200,
@@ -268,7 +263,7 @@ def main():
         st.caption("Building strong family-school partnerships")
     
     with col3:
-        st.markdown("**🎯 Student Success**")
+        st.markdown(f"**{get_material_icon_html('target')} Student Success**", unsafe_allow_html=True)
         render_lottie(
             "https://lottie.host/4e1ac443-9c90-4a25-b20d-c918d5a0290f/pa2Qd9xE5l.json",
             height=200,
@@ -280,15 +275,15 @@ def main():
 
     # Enhanced impact cards
     st.markdown("---")
-    st.markdown("### 💡 Family Engagement Impact")
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Family Engagement Impact", unsafe_allow_html=True)
     
     impact_col1, impact_col2 = st.columns(2)
     
     with impact_col1:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3>📈 Academic Growth</h3>
+            <h3>{get_material_icon_html('trending_up')} Academic Growth</h3>
             <p>Monitor daily progress and identify learning patterns</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
                 <strong>Track homework, reading, and focus levels</strong>
@@ -296,10 +291,10 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3>🤝 School Communication</h3>
+            <h3>{get_material_icon_html('handshake')} School Communication</h3>
             <p>Bridge home and school with shared insights</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
                 <strong>Share observations with teachers</strong>
@@ -308,10 +303,10 @@ def main():
         """, unsafe_allow_html=True)
     
     with impact_col2:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3>😊 Social-Emotional Health</h3>
+            <h3>{get_material_icon_html('sentiment_satisfied')} Social-Emotional Health</h3>
             <p>Monitor mood, behavior, and well-being indicators</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
                 <strong>Track mood and behavioral patterns</strong>
@@ -319,10 +314,10 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
              border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3>🏠 Home Environment</h3>
+            <h3>{get_material_icon_html('home')} Home Environment</h3>
             <p>Optimize learning conditions and routines</p>
             <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
                 <strong>Balance screen time and activities</strong>
@@ -332,7 +327,7 @@ def main():
 
     # Enhanced sidebar
     with st.sidebar:
-        st.markdown("### 👤 Child Information")
+        st.markdown(f"### {get_material_icon_html('person')} Child Information", unsafe_allow_html=True)
         
         # Child selection with better UX
         child_name = st.text_input(
@@ -343,7 +338,7 @@ def main():
         )
         
         if child_name:
-            st.success(f"✅ Tracking progress for **{child_name}**")
+            st.success( f"Tracking progress for **{child_name}**")
             
             # Show quick stats if data exists
             all_observations = load_parent_observations()
@@ -357,13 +352,13 @@ def main():
                 days_since = (date.today() - latest_date).days
                 
                 if days_since == 0:
-                    st.info("📅 Last entry: Today")
+                    st.info( "Last entry: Today")
                 elif days_since == 1:
-                    st.info("📅 Last entry: Yesterday")
+                    st.info( "Last entry: Yesterday")
                 else:
-                    st.warning(f"📅 Last entry: {days_since} days ago")
+                    st.warning( f"Last entry: {days_since} days ago")
         
-        st.markdown("### 🎯 Dashboard Views")
+        st.markdown(f"### {get_material_icon_html('target')} Dashboard Views", unsafe_allow_html=True)
         dashboard_view = st.selectbox(
             "Choose your view:",
             ["Daily Entry", "Progress Tracking", "Weekly Summary", "Observations Log"],
@@ -373,7 +368,7 @@ def main():
         
         # Enhanced date range for analysis
         if dashboard_view in ["Progress Tracking", "Weekly Summary"]:
-            st.markdown("### 📅 Analysis Period")
+            st.markdown(f"###  Analysis Period", unsafe_allow_html=True)
             
             period_preset = st.selectbox(
                 "Quick periods:",
@@ -393,11 +388,11 @@ def main():
                 else:  # Last 3 months
                     start_date = end_date - timedelta(days=90)
             
-            st.info(f"📊 Analyzing: {start_date} to {end_date}")
+            st.info(f"Analyzing: {start_date} to {end_date}")
 
     # Main content based on selected view
     if not child_name:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: center; padding: 3rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1)); 
              border-radius: 16px; border: 2px dashed rgba(139, 92, 246, 0.3);">
             <span class="material-symbols-outlined" style="font-size: 4rem; color: var(--primary-purple); margin-bottom: 1rem;">child_care</span>
@@ -412,8 +407,8 @@ def main():
         if 'daily_entry_reset_counter' not in st.session_state:
             st.session_state['daily_entry_reset_counter'] = 0
 
-        st.markdown("## 📝 Daily Observation Entry")
-        st.markdown(f"Recording observations for **{child_name}** on {date.today().strftime('%A, %B %d, %Y')}")
+        st.markdown(f"##  Daily Observation Entry")
+        st.markdown(f"Recording observations for **{child_name}** on {date.today().strftime('%A, %B %d, %Y')}", unsafe_allow_html=True)
         
         # Check if entry exists for today
         all_observations = load_parent_observations()
@@ -421,13 +416,13 @@ def main():
                            if obs.get('child_name') == child_name and obs['date'] == date.today().isoformat()), None)
         
         if today_entry:
-            st.info("📋 You already have an entry for today. You can update it by submitting again.")
+            st.info( "You already have an entry for today. You can update it by submitting again.")
         
         with st.form("daily_observation_form"):
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("### 📚 Academic Activities")
+                st.markdown(f"### {get_material_icon_html('library_books')} Academic Activities", unsafe_allow_html=True)
                 
                 homework_completion = st.slider(
                     "Homework Completion (%)", 
@@ -458,7 +453,7 @@ def main():
                 )
             
             with col2:
-                st.markdown("### 🎭 Behavioral & Emotional")
+                st.markdown(f"### {get_material_icon_html('psychology')} Behavioral & Emotional", unsafe_allow_html=True)
                 
                 behavior_rating = st.select_slider(
                     "Overall Behavior Rating", 
@@ -492,20 +487,20 @@ def main():
                     key=f"pt_energy_level_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
-            st.markdown("### 📝 Detailed Observations")
+            st.markdown(f"### {get_material_icon_html('edit')} Detailed Observations", unsafe_allow_html=True)
             
             col3, col4 = st.columns(2)
             
             with col3:
                 learning_wins = st.text_area(
-                    "🏆 Learning Wins & Successes",
+                    f"Learning Wins & Successes",
                     placeholder="What went well today? Any breakthroughs, proud moments, or achievements?",
                     height=100,
                     key=f"pt_learning_wins_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 challenges_faced = st.text_area(
-                    "⚠️ Challenges & Difficulties",
+                    f"Challenges & Difficulties",
                     placeholder="What was difficult today? Any specific struggles or concerns?",
                     height=100,
                     key=f"pt_challenges_faced_input_{st.session_state['daily_entry_reset_counter']}"
@@ -513,20 +508,20 @@ def main():
             
             with col4:
                 strategies_used = st.text_area(
-                    "💡 Helpful Strategies & Support",
+                    f"Helpful Strategies & Support",
                     placeholder="What strategies, tools, or supports helped your child today?",
                     height=100,
                     key=f"pt_strategies_used_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 social_interactions = st.text_area(
-                    "👥 Social Interactions",
+                    f"Social Interactions",
                     placeholder="How did your child interact with family, friends, or peers today?",
                     height=100,
                     key=f"pt_social_interactions_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
-            st.markdown("### 🏠 Home Environment Factors")
+            st.markdown(f"### {get_material_icon_html('home')} Home Environment Factors", unsafe_allow_html=True)
             
             col5, col6 = st.columns(2)
             
@@ -547,13 +542,13 @@ def main():
             
             with col6:
                 medication_taken = st.checkbox(
-                    "💊 Medication taken as prescribed", 
+                    f"Medication taken as prescribed", 
                     help="Check if all prescribed medications were taken properly",
                     key=f"pt_medication_taken_checkbox_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 special_events = st.text_input(
-                    "🎉 Special Events or Changes",
+                    f"Special Events or Changes",
                     placeholder="Any unusual events, schedule changes, or disruptions today?",
                     key=f"pt_special_events_input_{st.session_state['daily_entry_reset_counter']}"
                 )
@@ -561,12 +556,12 @@ def main():
             # Enhanced button layout
             col_buttons = st.columns(3)
             with col_buttons[0]:
-                submitted = st.form_submit_button("💾 Save Today's Observation", type="primary", use_container_width=True)
+                submitted = st.form_submit_button(f"Save Today's Observation", type="primary", use_container_width=True)
             with col_buttons[1]:
-                clear_button = st.form_submit_button("🔄 Clear Form", use_container_width=True)
+                clear_button = st.form_submit_button(f"Clear Form", use_container_width=True)
             with col_buttons[2]:
                 if today_entry:
-                    delete_button = st.form_submit_button("🗑️ Delete Today's Entry", use_container_width=True)
+                    delete_button = st.form_submit_button(f"Delete Today's Entry", use_container_width=True)
 
             if submitted:
                 observation_data = {
@@ -603,7 +598,7 @@ def main():
                                                  if not (obs.get('child_name') == child_name and obs['date'] == date.today().isoformat())]
                 st.session_state['parent_data'].append(observation_data)
                 
-                st.success("✅ Daily observation saved successfully!")
+                st.success( "Daily observation saved successfully!")
                 st.balloons()
             
             if clear_button:
@@ -616,11 +611,11 @@ def main():
                 all_observations = [obs for obs in all_observations 
                                   if not (obs.get('child_name') == child_name and obs['date'] == date.today().isoformat())]
                 # Note: In a real implementation, you would save this back to your data store
-                st.success("🗑️ Today's entry has been deleted!")
+                st.success( "Today's entry has been deleted!")
                 st.rerun()
 
     elif dashboard_view == "Progress Tracking":
-        st.markdown("## 📈 Progress Analysis Dashboard")
+        st.markdown(f"## {get_material_icon_html('trending_up')} Progress Analysis Dashboard", unsafe_allow_html=True)
         st.markdown(f"Comprehensive analysis for **{child_name}** from {start_date} to {end_date}")
         
         # Load observations properly
@@ -635,7 +630,7 @@ def main():
                             and start_date <= date.fromisoformat(obs['date']) <= end_date]
         
         if not child_observations:
-            st.markdown("""
+            st.markdown(f"""
             <div style="text-align: center; padding: 2rem; background: rgba(251, 191, 36, 0.1); 
                  border-radius: 12px; border: 2px dashed rgba(251, 191, 36, 0.5);">
                 <span class="material-symbols-outlined" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;">trending_up</span>
@@ -646,7 +641,7 @@ def main():
             return
         
         # Enhanced overview metrics
-        st.markdown("### 📊 Quick Overview")
+        st.markdown(f"### {get_material_icon_html('analytics')} Quick Overview", unsafe_allow_html=True)
         
         df = pd.DataFrame(child_observations)
         
@@ -673,7 +668,7 @@ def main():
                      delta=f"{total_reading // len(df):.0f} min/day")
         
         # Enhanced tabbed analysis
-        tab1, tab2, tab3, tab4 = st.tabs(["📚 Academic", "🎭 Behavioral", "😊 Emotional", "🏃 Health & Lifestyle"])
+        tab1, tab2, tab3, tab4 = st.tabs([f"{get_material_icon_html('library_books')} Academic", f"{get_material_icon_html('psychology')} Behavioral", f"{get_material_icon_html('sentiment_satisfied')} Emotional", f"{get_material_icon_html('directions_run')} Health & Lifestyle"])
         
         with tab1:
             st.markdown("### Academic Performance Trends")
@@ -690,7 +685,7 @@ def main():
                 if reading_fig:
                     st.plotly_chart(reading_fig, use_container_width=True)
             
-            st.markdown("#### 📊 Subject Difficulty Analysis")
+            st.markdown(f"#### {get_material_icon_html('analytics')} Subject Difficulty Analysis", unsafe_allow_html=True)
             
             all_subjects = []
             for obs in child_observations:
@@ -714,13 +709,12 @@ def main():
                 # Insights
                 most_difficult = subject_counts.index[0] if len(subject_counts) > 0 else None
                 if most_difficult:
-                    st.info(f"💡 **Insight**: {most_difficult} appears to be the most challenging subject with {subject_counts[most_difficult]} difficult days.")
+                    st.info( "**Insight**: {most_difficult} appears to be the most challenging subject with {subject_counts[most_difficult]} difficult days.")
             else:
-                st.success("🎉 Excellent! No subject difficulties recorded in this period.")
+                st.success( "Excellent! No subject difficulties recorded in this period.")
         
         with tab2:
             st.markdown("### Behavioral Progress Analysis")
-            
             behavior_fig = create_progress_chart(child_observations, 'behavior_rating')
             if behavior_fig:
                 st.plotly_chart(behavior_fig, use_container_width=True)
@@ -732,11 +726,11 @@ def main():
                 st.metric("Average Behavior Rating", f"{avg_behavior:.1f}/5")
                 
                 if avg_behavior >= 4:
-                    st.success("🌟 Excellent behavior overall!")
+                    st.success( "Excellent behavior overall!")
                 elif avg_behavior >= 3:
-                    st.info("✅ Good behavior with room for growth")
+                    st.info( "Good behavior with room for growth")
                 else:
-                    st.warning("⚠️ Behavior may need additional support")
+                    st.warning( "Behavior may need additional support")
             
             with col2:
                 good_days = len(df[df['behavior_rating'] >= 4])
@@ -792,11 +786,11 @@ def main():
                 st.metric("Happy Days", f"{happy_days}/{total_days}")
                 
                 if avg_mood >= 4:
-                    st.success("😊 Generally happy and positive!")
+                    st.success( "Generally happy and positive!")
                 elif avg_mood >= 3:
-                    st.info("😐 Balanced emotional state")
+                    st.info( "Balanced emotional state")
                 else:
-                    st.warning("😔 May benefit from emotional support")
+                    st.warning( "May benefit from emotional support")
                 
                 # Mood trends
                 if len(df) > 7:
@@ -804,9 +798,9 @@ def main():
                     overall_mood = df['mood_rating'].mean()
                     
                     if recent_mood > overall_mood:
-                        st.info("📈 Mood has been improving recently!")
+                        st.info( "Mood has been improving recently!")
                     elif recent_mood < overall_mood:
-                        st.warning("📉 Recent mood has been lower than average")
+                        st.warning( "Recent mood has been lower than average")
         
         with tab4:
             st.markdown("### Health & Lifestyle Analysis")
@@ -832,29 +826,29 @@ def main():
                 st.metric("Average Sleep", f"{avg_sleep:.1f} hrs")
                 
                 if avg_sleep >= 8:
-                    st.success("✅ Good sleep duration")
+                    st.success( "Good sleep duration")
                 elif avg_sleep >= 7:
-                    st.info("⚠️ Adequate sleep")
+                    st.info( "Adequate sleep")
                 else:
-                    st.warning("❌ May need more sleep")
+                    st.warning( "May need more sleep")
             
             with health_col2:
                 avg_activity = df['physical_activity'].mean()
                 st.metric("Average Activity", f"{avg_activity:.0f} min")
                 
                 if avg_activity >= 60:
-                    st.success("🏃 Great activity level!")
+                    st.success( "Great activity level!")
                 else:
-                    st.warning("🚶 Could use more activity")
+                    st.warning( "Could use more activity")
             
             with health_col3:
                 avg_screen = df['screen_time'].mean()
                 st.metric("Average Screen Time", f"{avg_screen:.1f} hrs")
                 
                 if avg_screen <= 2:
-                    st.success("📱 Good screen balance")
+                    st.success( "Good screen balance")
                 else:
-                    st.warning("📺 Consider reducing screen time")
+                    st.warning( "Consider reducing screen time")
             
             with health_col4:
                 if 'medication_taken' in df.columns:
@@ -862,12 +856,12 @@ def main():
                     st.metric("Medication Compliance", f"{med_compliance:.0f}%")
                     
                     if med_compliance >= 90:
-                        st.success("💊 Excellent compliance")
+                        st.success( "Excellent compliance")
                     else:
-                        st.warning("💊 Monitor medication schedule")
+                        st.warning( "Monitor medication schedule")
 
     elif dashboard_view == "Weekly Summary":
-        st.markdown("## 📅 Weekly Progress Summary")
+        st.markdown(f"## {get_material_icon_html('calendar_today')} Weekly Progress Summary", unsafe_allow_html=True)
         st.markdown(f"Comprehensive weekly analysis for **{child_name}**")
         
         # Load observations properly
@@ -882,7 +876,7 @@ def main():
                             and start_date <= date.fromisoformat(obs['date']) <= end_date]
         
         if not child_observations:
-            st.warning("⚠️ No observations found for the selected period.")
+            st.warning( "No observations found for the selected period.")
             return
         
         # Enhanced weekly summary with animations
@@ -892,39 +886,39 @@ def main():
             st.plotly_chart(weekly_fig, use_container_width=True)
             
             if weekly_data is not None and not weekly_data.empty:
-                st.markdown("### 🎯 Weekly Insights & Recommendations")
+                st.markdown(f"### {get_material_icon_html('target')} Weekly Insights & Recommendations", unsafe_allow_html=True)
                 
                 latest_week = weekly_data.iloc[-1]
                 
                 insight_col1, insight_col2 = st.columns(2)
                 
                 with insight_col1:
-                    st.markdown("#### 🌟 This Week's Highlights")
+                    st.markdown(f"#### {get_material_icon_html('star')} This Week's Highlights", unsafe_allow_html=True)
                     
                     # Homework insights
                     if latest_week['homework_completion'] >= 85:
-                        st.success("📚 Outstanding homework completion!")
+                        st.success( "Outstanding homework completion!")
                     elif latest_week['homework_completion'] >= 70:
-                        st.info("📖 Good homework habits developing")
+                        st.info( "Good homework habits developing")
                     else:
-                        st.warning("📝 Homework completion needs attention")
+                        st.warning( "Homework completion needs attention")
                     
                     # Behavior insights
                     if latest_week['behavior_rating'] >= 4:
-                        st.success("😊 Excellent behavior this week!")
+                        st.success( "Excellent behavior this week!")
                     elif latest_week['behavior_rating'] >= 3:
-                        st.info("👍 Good behavior overall")
+                        st.info( "Good behavior overall")
                     else:
-                        st.warning("🤔 Behavior may need support")
+                        st.warning( "Behavior may need support")
                     
                     # Sleep insights
                     if latest_week['sleep_hours'] >= 8:
-                        st.success("😴 Great sleep habits!")
+                        st.success( "Great sleep habits!")
                     else:
-                        st.warning("💤 Consider earlier bedtime")
+                        st.warning( "Consider earlier bedtime")
                 
                 with insight_col2:
-                    st.markdown("#### 📈 Growth & Trends")
+                    st.markdown(f"#### {get_material_icon_html('trending_up')} Growth & Trends", unsafe_allow_html=True)
                     
                     if len(weekly_data) > 1:
                         prev_week = weekly_data.iloc[-2]
@@ -938,19 +932,19 @@ def main():
                         concerns = []
                         
                         if homework_change > 5:
-                            improvements.append("📈 Homework completion improved")
+                            improvements.append(f"{get_material_icon_html('trending_up')} Homework completion improved")
                         elif homework_change < -5:
-                            concerns.append("📉 Homework completion declined")
+                            concerns.append(f"{get_material_icon_html('trending_down')} Homework completion declined")
                         
                         if behavior_change > 0.3:
-                            improvements.append("😊 Behavior rating improved")
+                            improvements.append(f"{get_material_icon_html('sentiment_satisfied')} Behavior rating improved")
                         elif behavior_change < -0.3:
-                            concerns.append("😟 Behavior rating declined")
+                            concerns.append(f"{get_material_icon_html('sentiment_dissatisfied')} Behavior rating declined")
                         
                         if mood_change > 0.3:
-                            improvements.append("🌟 Mood has improved")
+                            improvements.append(f"{get_material_icon_html('star')} Mood has improved")
                         elif mood_change < -0.3:
-                            concerns.append("☁️ Mood has declined")
+                            concerns.append(f"{get_material_icon_html('cloud')} Mood has declined")
                         
                         if improvements:
                             st.markdown("**Positive Changes:**")
@@ -963,13 +957,13 @@ def main():
                                 st.warning(concern)
                         
                         if not improvements and not concerns:
-                            st.info("📊 Consistent patterns maintained")
+                            st.info( "Consistent patterns maintained")
                     else:
-                        st.info("🔄 Need more weeks of data for trend analysis")
+                        st.info( "Need more weeks of data for trend analysis")
                 
                 # Goal setting section
                 st.markdown("---")
-                st.markdown("### 🎯 Goals for Next Week")
+                st.markdown(f"###  Goals for Next Week")
                 
                 goal_col1, goal_col2 = st.columns(2)
                 
@@ -987,7 +981,7 @@ def main():
                                           placeholder="Overall observations, special events, or notes for this week...",
                                           key="weekly_summary_notes")
                 
-                if st.button("💾 Save Weekly Goals & Summary", key="save_weekly_summary"):
+                if st.button( "Save Weekly Goals & Summary", key="save_weekly_summary"):
                     weekly_summary = {
                         "child_name": child_name,
                         "week_start": start_date.isoformat(),
@@ -1004,12 +998,12 @@ def main():
                         st.session_state['weekly_data'] = []
                     
                     st.session_state['weekly_data'].append(weekly_summary)
-                    st.success("✅ Weekly summary and goals saved successfully!")
+                    st.success( "Weekly summary and goals saved successfully!")
             else:
-                st.info("📊 Insufficient data for weekly summary analysis")
+                st.info( "Insufficient data for weekly summary analysis")
 
     else:  # Observations Log
-        st.markdown("## 📋 Complete Observation History")
+        st.markdown(f"##  Complete Observation History")
         st.markdown(f"Detailed log of all observations for **{child_name}**")
         
         # Load observations properly
@@ -1022,7 +1016,7 @@ def main():
         child_observations = [obs for obs in all_observations if obs.get('child_name') == child_name]
         
         if not child_observations:
-            st.markdown("""
+            st.markdown(f"""
             <div style="text-align: center; padding: 2rem; background: rgba(251, 191, 36, 0.1); 
                  border-radius: 12px; border: 2px dashed rgba(251, 191, 36, 0.5);">
                 <span class="material-symbols-outlined" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;">history</span>
@@ -1049,23 +1043,23 @@ def main():
             show_detailed = st.checkbox("Show detailed observations", value=True, key="pt_log_show_detailed")
         
         # Clear data functionality
-        if st.button("🗑️ Clear All Data", key="clear_all_data_btn", help="This will permanently delete all observations"):
-            st.warning("⚠️ This action cannot be undone. Are you sure you want to delete all observation data?")
+        if st.button( "Clear All Data", key="clear_all_data_btn", help="This will permanently delete all observations"):
+            st.warning( "This action cannot be undone. Are you sure you want to delete all observation data?")
             
             confirm_col1, confirm_col2 = st.columns(2)
             with confirm_col1:
-                if st.button("✅ Yes, Delete All", key="confirm_delete_all"):
+                if st.button( "Yes, Delete All", key="confirm_delete_all"):
                     # Clear session state data
                     st.session_state['parent_data'] = []
                     st.session_state['weekly_data'] = []
-                    st.success("🗑️ All observation data has been cleared!")
+                    st.success( "All observation data has been cleared!")
                     st.rerun()
             
             with confirm_col2:
-                if st.button("❌ Cancel", key="cancel_delete_all"):
+                if st.button( "Cancel", key="cancel_delete_all"):
                     st.info("Data deletion cancelled.")
         
-        st.markdown(f"### 📊 Showing {len(child_observations)} observations")
+        st.markdown(f"###  Showing {len(child_observations)} observations")
         
         # Apply filters
         filtered_observations = child_observations
@@ -1087,14 +1081,26 @@ def main():
             behavior_rating = obs['behavior_rating']
             if behavior_rating >= 4:
                 header_color = "#10b981"  # Green
-                rating_emoji = "😊"
+                rating_emoji = get_material_icon_html('sentiment_satisfied')
             elif behavior_rating >= 3:
                 header_color = "#3b82f6"  # Blue
-                rating_emoji = "😐"
+                rating_emoji = get_material_icon_html('sentiment_neutral')
             else:
                 header_color = "#f59e0b"  # Orange
-                rating_emoji = "😔"
+                rating_emoji = get_material_icon_html('sentiment_dissatisfied')
             
+            st.markdown(
+                f"""
+                <div style="border-left: 5px solid {header_color}; padding: 0.5rem 1rem; margin-bottom: 1rem; background-color: #f9fafb;">
+                    <h4 style="margin: 0; font-size: 1rem; color: {header_color};">
+                        {rating_emoji} Observation on {obs_date.strftime('%B %d, %Y')}
+                    </h4>
+                    <p style="margin: 0.5rem 0 0 0;">{obs['note']}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
             with st.expander(f"{rating_emoji} {obs_date.strftime('%A, %B %d, %Y')} - Behavior: {behavior_rating}/5"):
                 # Quick metrics row
                 metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
@@ -1114,7 +1120,7 @@ def main():
                     detail_col1, detail_col2, detail_col3 = st.columns(3)
                     
                     with detail_col1:
-                        st.markdown("**📚 Academic Details**")
+                        st.markdown(f"** Academic Details**", unsafe_allow_html=True)
                         st.write(f"• Focus Level: {obs.get('focus_level', 'N/A')}")
                         if obs.get('subjects_struggled'):
                             st.write(f"• Difficult Subjects: {', '.join(obs['subjects_struggled'])}")
@@ -1122,14 +1128,14 @@ def main():
                             st.write("• No subject difficulties")
                     
                     with detail_col2:
-                        st.markdown("**🎭 Behavioral & Social**")
+                        st.markdown(f"** Behavioral & Social**", unsafe_allow_html=True)
                         st.write(f"• Energy Level: {obs.get('energy_level', 'N/A')}")
                         st.write(f"• Screen Time: {obs['screen_time']} hrs")
                         st.write(f"• Physical Activity: {obs['physical_activity']} min")
                     
                     with detail_col3:
-                        st.markdown("**💊 Health & Special**")
-                        med_status = "✅ Yes" if obs['medication_taken'] else "❌ No"
+                        st.markdown(f"** Health & Special**", unsafe_allow_html=True)
+                        med_status = f"{get_material_icon_html('check_circle')} Yes" if obs['medication_taken'] else f"{get_material_icon_html('cancel')} No"
                         st.write(f"• Medication: {med_status}")
                         if obs.get('special_events'):
                             st.write(f"• Special Events: {obs['special_events']}")
@@ -1137,26 +1143,26 @@ def main():
                     # Detailed notes
                     if any([obs.get('learning_wins'), obs.get('challenges_faced'), 
                            obs.get('strategies_used'), obs.get('social_interactions')]):
-                        st.markdown("**📝 Detailed Notes:**")
+                        st.markdown(f"** Detailed Notes:**", unsafe_allow_html=True)
                         
                         if obs.get('learning_wins'):
-                            st.success(f"🏆 **Wins:** {obs['learning_wins']}")
+                            st.success( f"**Wins:** {obs['learning_wins']}")
                         
                         if obs.get('challenges_faced'):
-                            st.warning(f"⚠️ **Challenges:** {obs['challenges_faced']}")
+                            st.warning( f"**Challenges:** {obs['challenges_faced']}")
                         
                         if obs.get('strategies_used'):
-                            st.info(f"💡 **Strategies:** {obs['strategies_used']}")
+                            st.info( f"**Strategies:** {obs['strategies_used']}")
                         
                         if obs.get('social_interactions'):
-                            st.info(f"👥 **Social:** {obs['social_interactions']}")
+                            st.info( f"**Social:** {obs['social_interactions']}")
         
         # Export functionality
         st.markdown("---")
         export_col1, export_col2 = st.columns(2)
         
         with export_col1:
-            if st.button("📥 Export All Observations", key="pt_export_all_observations"):
+            if st.button( "Export All Observations", key="pt_export_all_observations"):
                 df_export = pd.DataFrame(child_observations)
                 csv = df_export.to_csv(index=False)
                 st.download_button(
@@ -1169,7 +1175,7 @@ def main():
         
         with export_col2:
             if filtered_observations != child_observations:
-                if st.button("📊 Export Filtered Data", key="pt_export_filtered"):
+                if st.button( "sExport Filtered Data", key="pt_export_filtered"):
                     df_filtered = pd.DataFrame(filtered_observations)
                     csv_filtered = df_filtered.to_csv(index=False)
                     st.download_button(
@@ -1182,53 +1188,53 @@ def main():
 
     # Enhanced tips and support section
     st.markdown("---")
-    st.markdown("### 💡 Parent Tracking Success Tips")
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Parent Tracking Success Tips", unsafe_allow_html=True)
     
     tip_col1, tip_col2 = st.columns(2)
     
     with tip_col1:
-        st.markdown("""
-        **🎯 Effective Daily Tracking:**
+        st.markdown(f"""
+        **{get_material_icon_html('target')} Effective Daily Tracking:**
         - Record observations at the same time each day for consistency
         - Be specific about both successes and challenges
         - Note what strategies and supports work best for your child
         - Focus on patterns over time rather than individual bad days
         - Include context about special events or changes in routine
-        """)
+        """, unsafe_allow_html=True)
     
     with tip_col2:
-        st.markdown("""
-        **🤝 When to Reach Out for Support:**
+        st.markdown(f"""
+        **{get_material_icon_html('handshake')} When to Reach Out for Support:**
         - Consistent low behavior or mood ratings over several days
         - Persistent difficulties with homework or specific subjects  
         - Significant changes in sleep patterns or energy levels
         - Social interaction concerns or withdrawal from activities
         - Any pattern that concerns you as a parent
-        """)
+        """, unsafe_allow_html=True)
     
     # Contact and resources
     st.markdown("---")
-    st.markdown("### 📞 Support & Resources")
+    st.markdown(f"### {get_material_icon_html('phone')} Support & Resources", unsafe_allow_html=True)
     
     support_col1, support_col2 = st.columns(2)
     
     with support_col1:
-        st.markdown("""
-        **🏫 School Communication:**
+        st.markdown(f"""
+        **{get_material_icon_html('school')} School Communication:**
         - Share observation trends with your child's teacher
         - Use data to support parent-teacher conferences
         - Collaborate on consistent strategies between home and school
         - Request additional assessments if patterns indicate needs
-        """)
+        """, unsafe_allow_html=True)
     
     with support_col2:
-        st.markdown("""
-        **📚 Additional Resources:**
+        st.markdown(f"""
+        **{get_material_icon_html('library_books')} Additional Resources:**
         - [Parent Support Groups](/#) - Connect with other parents
         - [Learning Strategies Guide](/#) - Evidence-based home support methods
         - [Child Development Milestones](/#) - Age-appropriate expectations
         - **Help Desk:** support@eduscan.edu | (555) 123-4567
-        """)
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
