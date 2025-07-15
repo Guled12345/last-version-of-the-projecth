@@ -13,5 +13,15 @@
     "username": "admin",
     "password": "adminpassword",
     "role": "admin"
+  },
+  {
+    "username": "student1",
+    "password": "password123",
+    "role": "student"
+  },
+  {
+    "username": "guest",
+    "password": "guestpassword",
+    "role": "guest"
   }
 ]

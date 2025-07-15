@@ -59,39 +59,104 @@ def get_user_role():
     return st.session_state.get("role")
 
 def render_login_page():
-    """Renders the login form."""
-    # Wrap the entire login content in a div with a specific class for styling
+    """Renders the enhanced professional login form."""
+    # Enhanced login page with better styling and professional layout
     st.markdown(
         """
-        <div class="login-container">
+        <div class="login-page-container">
+            <div class="login-form-card">
+                <div class="login-header-section">
+                    <div class="login-brand-logo">
+                        <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <h1 class="login-title">Welcome to EduScan</h1>
+                    <p class="login-subtitle">Advanced Learning Assessment Platform</p>
+                    <div class="login-divider"></div>
+                </div>
         """,
         unsafe_allow_html=True
     )
     
-    st.title("EduScan Login")
-    st.markdown("Please log in to access the application.")
-
-    with st.form("login_form"):
-        username = st.text_input("Username", key="login_username")
-        password = st.text_input("Password", type="password", key="login_password")
-        submitted = st.form_submit_button("Login")
+    # Login form section
+    with st.form("login_form", clear_on_submit=False):
+        st.markdown(
+            '''
+            <style>
+                .login-form-section {
+                    max-width: 200px;
+                    margin: 0 auto;
+                }
+            </style>
+            <div class="login-form-section">
+            ''',
+            unsafe_allow_html=True
+        )
+        
+        username = st.text_input(
+            "Username", 
+            key="login_username",
+            placeholder="Enter your username",
+            help="Use your assigned EduScan username"
+        )
+        password = st.text_input(
+            "Password", 
+            type="password", 
+            key="login_password",
+            placeholder="Enter your password",
+            help="Enter your secure password"
+        )
+        
+        # Add some spacing before the button
+        st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
+        
+        submitted = st.form_submit_button(
+            "🔐 Sign In to EduScan", 
+            use_container_width=True,
+            type="primary"
+        )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
         if submitted:
-            if authenticate_user(username, password):
-                st.success(f"Welcome, {st.session_state['username']} ({st.session_state['role'].capitalize()})!")
-                st.switch_page("app.py") # Use st.switch_page for full redirect
+            if username and password:  # Basic validation
+                if authenticate_user(username, password):
+                    st.success(f"✅ Welcome back, {st.session_state['username']}!")
+                    st.balloons()  # Add a nice touch
+                    st.switch_page("app.py")
+                else:
+                    st.error("❌ Invalid credentials. Please check your username and password.")
             else:
-                st.error("Invalid username or password.")
-                
-    st.markdown("---")
-    st.markdown("### Demo Accounts:")
-    st.markdown("- **Teacher:** `teacher1` / `password123`")
-    st.markdown("- **Parent:** `parent1` / `password123`")
-    st.markdown("- **Admin:** `admin` / `adminpassword`")
+                st.warning("⚠️ Please enter both username and password.")
+    
+    # Demo accounts section with expander and left alignment
+    st.markdown("""
+        <div class="demo-accounts-section" style="text-align: left;">
+            <div class="demo-accounts-header" style="justify-content: flex-start; margin-bottom: 0;">
+                <span class="material-symbols-outlined" style="margin-right: 8px;">account_circle</span>
+                <h3 style="margin-bottom: 0;">Quick Demo Access</h3>
+            </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown(
-        """
+    with st.expander("Show Demo Login Details"):
+        st.markdown("""
+            <p style="font-size: 0.9em; color: var(--gray-600); margin-top: 10px; text-align: left;">
+                You can use these demo accounts to explore the platform:
+                <br><b>Teacher:</b> teacher1 / password123
+                <br><b>Parent:</b> parent1 / password123
+                <br><b>Admin:</b> admin / adminpassword
+            </p>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("""
         </div>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
+
+    # Footer section
+    st.markdown("""
+        <div class="login-footer">
+            <p>
+                <span class="material-symbols-outlined">security</span>
+                Your data is secure and protected
+            </p>
+        </div>
+        </div> </div> """, unsafe_allow_html=True)

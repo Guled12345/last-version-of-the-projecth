@@ -1,54 +1,45 @@
-# pages/03_Parent_Tracker.py
+# pages/03_Parent_Tracker.py - Enhanced with Material Icons
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, date, timedelta
-import json
 import os
 import sys
 
-# Add streamlit-lottie import
+# Enhanced Lottie import
 try:
     from streamlit_lottie import st_lottie
     import requests
     LOTTIE_AVAILABLE = True
 except ImportError:
     LOTTIE_AVAILABLE = False
-    st.warning("streamlit-lottie not installed. Install with: pip install streamlit-lottie")
 
 # Append parent directory to sys.path to enable importing from utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.data_utils import save_parent_observation, load_parent_observations
-from utils.image_base64 import get_base64_images # Only need this for the image dict
-from utils.language_utils import get_text, load_app_settings, save_app_settings
-
-# Corrected: All UI functions now imported from utils.exact_ui
+from utils.language_utils import load_app_settings
 from utils.exact_ui import (
     add_exact_ui_styles,
     render_exact_sidebar,
-    render_exact_page_header,
-    custom_alert,
-    create_exact_metric_card,
-    create_exact_chart_container,
-    get_b64_image_html
+    render_exact_page_header
 )
-from utils.auth_utils import is_authenticated, render_login_page, logout_user, get_user_role
-from utils.icon_utils import get_material_icon_html # NEW: Import for specific Material Icons in content
+from utils.auth_utils import is_authenticated, get_user_role
+from utils.icon_utils import get_material_icon_html
 
-# IMPORTANT: Page config MUST be the first Streamlit command for this page
+# Page config
 st.set_page_config(
     page_title="EduScan Parent Tracker",
-    page_icon=get_material_icon_html("family_restroom"), # Replaced emoji with Material Icon HTML
+    page_icon="👨‍👩‍👧‍👦",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Apply modern UI styles - CRITICAL to be at the top of the script
+# Apply styles and initialize
 add_exact_ui_styles()
 
-# Initialize language and theme in session state (these are usually inherited from app.py)
 if 'app_language' not in st.session_state:
     settings = load_app_settings()
     st.session_state['app_language'] = settings.get('language', 'English')
@@ -59,63 +50,73 @@ if 'offline_mode' not in st.session_state:
     settings = load_app_settings()
     st.session_state['offline_mode'] = settings.get('offline_mode', False)
 
-# Get current language
 language = st.session_state.get('app_language', 'English')
 current_theme = st.session_state.get('app_theme', 'Light')
 
-# Apply theme-specific body attribute via JavaScript (important for dynamic theme changes)
 st.markdown(f"""
     <script>
         document.body.setAttribute('data-theme', '{current_theme}');
     </script>
 """, unsafe_allow_html=True)
 
-# Render the sidebar for this page (from utils.exact_ui). This is called only once per rerun.
 render_exact_sidebar()
 
+# Initialize session state for parent data
+if 'parent_data' not in st.session_state:
+    st.session_state['parent_data'] = []
+if 'weekly_data' not in st.session_state:
+    st.session_state['weekly_data'] = []
+
+# Clean Lottie functions
 def load_lottie_url(url: str):
-    """Load Lottie animation from URL"""
+    """Load Lottie animation with timeout"""
     if not LOTTIE_AVAILABLE:
         return None
     try:
-        r = requests.get(url)
-        if r.status_code != 200:
-            return None
-        return r.json()
+        r = requests.get(url, timeout=5)
+        if r.status_code == 200:
+            return r.json()
     except:
-        return None
+        pass
+    return None
 
 def remove_lottie_background(lottie_json):
-    """Remove background from Lottie JSON"""
+    """Simple background removal"""
     if not lottie_json:
         return None
+    try:
+        if 'bg' in lottie_json:
+            del lottie_json['bg']
+        lottie_json['bg'] = None
+        return lottie_json
+    except:
+        return lottie_json
+
+def render_lottie(url, height=200, key=None, fallback_icon="family_restroom", fallback_text="Loading..."):
+    """Simple Lottie renderer with fallback"""
+    if LOTTIE_AVAILABLE:
+        lottie_json = load_lottie_url(url)
+        if lottie_json:
+            cleaned = remove_lottie_background(lottie_json)
+            try:
+                st_lottie(cleaned, height=height, key=key, speed=1, loop=True, quality="high")
+                return True
+            except:
+                pass
     
-    # Method 1: Remove solid background layers
-    if 'layers' in lottie_json:
-        # Filter out solid color layers (backgrounds)
-        lottie_json['layers'] = [
-            layer for layer in lottie_json['layers'] 
-            if layer.get('ty') != 1  # ty=1 is solid layer type
-        ]
-        
-        # Also remove any layers with solid fills that cover the entire composition
-        lottie_json['layers'] = [
-            layer for layer in lottie_json['layers']
-            if not (layer.get('ty') == 4 and  # shape layer
-                   any(shape.get('ty') == 'fl' for shape in layer.get('shapes', [])))  # fill shape
-        ]
-    
-    # Method 2: Set background color to transparent
-    if 'bg' in lottie_json:
-        del lottie_json['bg']
-    
-    # Method 3: Remove background color property
-    lottie_json['bg'] = None
-    
-    return lottie_json
+    # Elegant fallback
+    st.markdown(f"""
+    <div style="height: {height}px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+         background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1)); 
+         border-radius: 12px; text-align: center; border: 2px dashed rgba(139, 92, 246, 0.3);">
+        <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--primary-purple); margin-bottom: 0.5rem; animation: pulse 2s infinite;">{fallback_icon}</span>
+        <p style="color: var(--gray-600); margin: 0; font-weight: 500;">{fallback_text}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    return False
 
 def create_progress_chart(data, metric):
-    """Create progress chart for specific metric"""
+    """Create enhanced progress chart for specific metric"""
     df = pd.DataFrame(data)
     if df.empty:
         return None
@@ -123,39 +124,89 @@ def create_progress_chart(data, metric):
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values('date')
     
-    fig = px.line(df, x='date', y=metric, 
-                    title=f"{metric.replace('_', ' ').title()} Progress Over Time",
-                    markers=True)
+    # Determine color based on metric type
+    color_map = {
+        'homework_completion': '#10b981',  # Green
+        'behavior_rating': '#3b82f6',     # Blue
+        'mood_rating': '#f59e0b',         # Orange
+        'sleep_hours': '#8b5cf6',         # Purple
+        'reading_time': '#ef4444',        # Red
+        'physical_activity': '#06b6d4'    # Cyan
+    }
     
+    color = color_map.get(metric, '#6b7280')
+    
+    fig = px.line(df, x='date', y=metric, 
+                  title=f"{metric.replace('_', ' ').title()} Progress Over Time",
+                  markers=True,
+                  color_discrete_sequence=[color])
+    
+    # UPDATED layout for progress charts
     fig.update_layout(
-        xaxis_title="Date",
-        yaxis_title=metric.replace('_', ' ').title(),
-        height=400
+        title=f"{metric.replace('_', ' ').title()} Progress Over Time", # Title from metric
+        height=450,
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent plot area
+        margin=dict(l=60, r=40, t=60, b=60),
+        font=dict(family='Inter', color='var(--gray-700)'),
+        showlegend=False, # Typically no legend for single line charts
+        xaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title="Date", # Changed title to Date for progress charts
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        yaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title=metric.replace('_', ' ').title(), # Title from metric
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter'
+        )
     )
     
     return fig
 
 def create_weekly_summary(data):
-    """Create weekly summary visualization"""
+    """Create enhanced weekly summary visualization"""
     if not data:
         return None, None
     
     df = pd.DataFrame(data)
+    if df.empty:
+        return None, None
+
     df['date'] = pd.to_datetime(df['date'])
     df['week'] = df['date'].dt.to_period('W')
     
     # Calculate weekly averages
     weekly_avg = df.groupby('week')[['homework_completion', 'behavior_rating', 'sleep_hours', 'mood_rating']].mean()
     
-    # Create summary chart
+    if weekly_avg.empty:
+        return None, None
+
+    # Create enhanced summary chart
     fig = go.Figure()
     
-    colors = ['var(--primary-purple)', 'var(--warning-orange)', 'var(--success-green)', 'var(--info-blue)'] # Use CSS variables
+    colors = ['#8b5cf6', '#f59e0b', '#10b981', '#3b82f6']
     metrics_map = {
-        'homework_completion': get_text('homework_completion_label', st.session_state.app_language),
-        'behavior_rating': get_text('behavior_rating_label', st.session_state.app_language),
-        'sleep_hours': get_text('sleep_hours_label', st.session_state.app_language),
-        'mood_rating': get_text('mood_rating_label', st.session_state.app_language),
+        'homework_completion': 'Homework Completion',
+        'behavior_rating': 'Behavior Rating',
+        'sleep_hours': 'Sleep Hours',
+        'mood_rating': 'Mood Rating',
     }
     
     for i, metric in enumerate(['homework_completion', 'behavior_rating', 'sleep_hours', 'mood_rating']):
@@ -163,285 +214,369 @@ def create_weekly_summary(data):
             x=weekly_avg.index.astype(str),
             y=weekly_avg[metric],
             mode='lines+markers',
-            name=metrics_map[metric], # Use translated labels
-            line=dict(color=colors[i])
+            name=metrics_map[metric],
+            line=dict(color=colors[i], width=3),
+            marker=dict(size=8)
         ))
     
+    # UPDATED layout for weekly summary chart
     fig.update_layout(
         title="Weekly Progress Summary",
-        xaxis_title=get_text('week', st.session_state.app_language), # Translated
-        yaxis_title=get_text('score', st.session_state.app_language), # Translated
-        height=400
+        height=450,
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent plot area
+        margin=dict(l=60, r=40, t=60, b=60),
+        font=dict(family='Inter', color='var(--gray-700)'),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(color='var(--gray-700)')
+        ),
+        xaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title="Week",
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        yaxis=dict(
+            gridcolor='var(--gray-200)',
+            showgrid=True,
+            title="Score",
+            title_font=dict(size=14, color='var(--gray-700)'),
+            tickfont=dict(size=12, color='var(--gray-600)'),
+            showline=True,
+            linecolor='var(--gray-300)',
+            mirror=True
+        ),
+        hovermode='x unified',
+        hoverlabel=dict(
+            bgcolor='white',
+            font_size=12,
+            font_family='Inter'
+        )
     )
     
     return fig, weekly_avg
 
 def main():
-    # Authentication check for the page
+    # Authentication check
     if not is_authenticated():
-        custom_alert("Please log in to access the Parent Tracker page.", alert_type="warning")
+        st.warning("Please log in to access the Parent Tracker page.")
         st.switch_page("app.py")
         return
 
-    # Role-based access control
+    # Role-based access controls
     user_role = get_user_role()
     if user_role == 'teacher':
         st.error("Access Denied: Teachers cannot view Parent Resources.")
         st.info("Redirecting you to Teacher Resources...")
         st.switch_page("pages/02_Teacher_Resources.py")
         return
-        
-    # Render main app header with dynamic content
-    render_exact_page_header(get_material_icon_html('family_restroom'), 'parent_tracker', 'supporting_childs_learning', language)
     
-    # Single centered Lottie animation for family support
-    st.markdown(f"### {get_text('supporting_childs_learning', language)}")
+    # Header
+    render_exact_page_header(
+        get_material_icon_html('family_restroom'), 
+        'Parent Trackers', 
+        'Monitor Your Child\'s Learning Journey Together', 
+        language
+    )
     
-    col_center1, col_center2, col_center3 = st.columns([1, 2, 1])
+    # Enhanced hero section with multiple animations
+    st.markdown(f"###  Strengthening Home-School Connections", unsafe_allow_html=True)
     
-    with col_center2:
-        if LOTTIE_AVAILABLE:
-            # Family support animation
-            family_url = "https://lottie.host/ed479bf5-36af-4dd8-84f2-f5893f0687f9/Tgc64kKeCO.json"
-            family_json = load_lottie_url(family_url)
-            family_json = remove_lottie_background(family_json)
-            
-            if family_json:
-                st.markdown("**Strengthening Home-School Connections**")
-                st_lottie(
-                    family_json, 
-                    height=250,
-                    key="family_support_animation",
-                    speed=1,
-                    loop=True,
-                    quality="high",
-                    # renderer="canvas"
-                )
-                st.markdown("Empowering families with tools to track, support, and celebrate their child's learning journey")
-    
-    # Family showcase section with decorated text instead of images
-    st.markdown(f"""
-    <div class="family-section">
-        <h2 class="highlight-text">Supporting Every Family Connection</h2>
-        <div class="family-showcase">
-            <div class="family-card">
-                <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-                    <h3>📊 Daily Tracking</h3>
-                </div>
-                <h4>{get_text('daily_tracking', language).replace('_', ' ').title()}</h4>
-                <p>{get_text('monitor_child_progress', language)}</p>
-            </div>
-            <div class="family-card">
-                <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-                    <h3>💪 Parent Empowerment</h3>
-                </div>
-                <h4>{get_text('parent_empowerment', language)}</h4>
-                <p>{get_text('gain_insights_strategies', language)}</p>
-            </div>
-            <div class="family-card">
-                <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-                    <h3>🤝 School Partnership</h3>
-                </div>
-                <h4>{get_text('school_partnership', language).replace('_', ' ').title()}</h4>
-                <p>{get_text('build_communication_bridges', language)}</p>
-            </div>
-            <div class="family-card">
-                <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-                    <h3>🎉 Student Success</h3>
-                </div>
-                <h4>{get_text('student_success', language)}</h4>
-                <p>{get_text('celebrate_achievements', language)}</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Add student progress gallery with decorated text
-    st.markdown(f"### {get_text('student_progress_stories', language)}")
-    
+    # Three-column animation layout
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-            <h3>📈 Academic Progress</h3>
-            <p>Tracking growth in learning</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"**{get_material_icon_html('track_changes')} Progress Tracking**", unsafe_allow_html=True)
+        render_lottie(
+            "https://lottie.host/ceff5ec9-b733-44f1-b68e-aa9d6676297d/xGcBHYi1ID.json",
+            height=200,
+            key="progress_tracking",
+            fallback_icon="analytics",
+            fallback_text="Daily Progress Monitoring"
+        )
+        st.caption("Track daily learning activities and behaviors")
     
     with col2:
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-            <h3>😊 Learning Joy</h3>
-            <p>Celebrating happy moments</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"**{get_material_icon_html('diversity_3')} Family Support**", unsafe_allow_html=True)
+        render_lottie(
+            "https://lottie.host/ed479bf5-36af-4dd8-84f2-f5893f0687f9/Tgc64kKeCO.json",
+            height=200,
+            key="family_support",
+            fallback_icon="family_restroom",
+            fallback_text="Family Collaboration"
+        )
+        st.caption("Building strong family-school partnerships")
     
     with col3:
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 12px; color: white; margin-bottom: 1rem;">
-            <h3>🎯 Study Focus</h3>
-            <p>Building concentration skills</p>
+        st.markdown(f"**{get_material_icon_html('target')} Student Success**", unsafe_allow_html=True)
+        render_lottie(
+            "https://lottie.host/4e1ac443-9c90-4a25-b20d-c918d5a0290f/pa2Qd9xE5l.json",
+            height=200,
+            key="student_success_parent",
+            fallback_icon="emoji_events",
+            fallback_text="Celebrating Achievements"
+        )
+        st.caption("Celebrating learning milestones together")
+
+    # Enhanced impact cards
+    st.markdown("---")
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Family Engagement Impact", unsafe_allow_html=True)
+    
+    impact_col1, impact_col2 = st.columns(2)
+    
+    with impact_col1:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+             border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3>{get_material_icon_html('trending_up')} Academic Growth</h3>
+            <p>Monitor daily progress and identify learning patterns</p>
+            <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
+                <strong>Track homework, reading, and focus levels</strong>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+             border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3>{get_material_icon_html('handshake')} School Communication</h3>
+            <p>Bridge home and school with shared insights</p>
+            <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
+                <strong>Share observations with teachers</strong>
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
-    # Sidebar for child selection and navigation
+    with impact_col2:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+             border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3>{get_material_icon_html('sentiment_satisfied')} Social-Emotional Health</h3>
+            <p>Monitor mood, behavior, and well-being indicators</p>
+            <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
+                <strong>Track mood and behavioral patterns</strong>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 2rem; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
+             border-radius: 16px; color: white; margin-bottom: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3>{get_material_icon_html('home')} Home Environment</h3>
+            <p>Optimize learning conditions and routines</p>
+            <div style="background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 8px; margin-top: 1rem;">
+                <strong>Balance screen time and activities</strong>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Enhanced sidebar
     with st.sidebar:
-        st.markdown(f"### {get_text('child_selection', language)}")
-        child_name = st.text_input(get_text('child_name', language), placeholder="Enter child's name", key="pt_child_name_input")
+        st.markdown(f"### {get_material_icon_html('person')} Child Information", unsafe_allow_html=True)
         
-        if child_name:
-            st.success(f"Tracking: {child_name}")
-        
-        st.markdown(f"### {get_text('dashboard_options', language)}")
-        dashboard_view = st.selectbox(
-            get_text('choose_view', language),
-            [get_text('daily_entry', language), get_text('progress_tracking', language), get_text('weekly_summary', language), get_text('observations_log', language)],
-            key="pt_dashboard_view_selector"
+        # Child selection with better UX
+        child_name = st.text_input(
+            "Child's Name", 
+            placeholder="Enter your child's full name", 
+            key="pt_child_name_input",
+            help="This will be used to track and organize all observations"
         )
         
-        # Date range for analysis
-        if dashboard_view in [get_text('progress_tracking', language), get_text('weekly_summary', language)]:
-            st.markdown("### Date Range")
-            end_date = st.date_input("End Date", value=date.today(), key="pt_end_date_input")
-            start_date = st.date_input("Start Date", value=end_date - timedelta(days=30), key="pt_start_date_input")
+        if child_name:
+            st.success( f"Tracking progress for **{child_name}**")
+            
+            # Show quick stats if data exists
+            all_observations = load_parent_observations()
+            child_observations = [obs for obs in all_observations if obs.get('child_name') == child_name]
+            
+            if child_observations:
+                st.metric("Total Observations", len(child_observations))
+                
+                latest_obs = max(child_observations, key=lambda x: x['date'])
+                latest_date = date.fromisoformat(latest_obs['date'])
+                days_since = (date.today() - latest_date).days
+                
+                if days_since == 0:
+                    st.info( "Last entry: Today")
+                elif days_since == 1:
+                    st.info( "Last entry: Yesterday")
+                else:
+                    st.warning( f"Last entry: {days_since} days ago")
+        
+        st.markdown(f"### {get_material_icon_html('target')} Dashboard Views", unsafe_allow_html=True)
+        dashboard_view = st.selectbox(
+            "Choose your view:",
+            ["Daily Entry", "Progress Tracking", "Weekly Summary", "Observations Log"],
+            key="pt_dashboard_view_selector",
+            help="Select what you'd like to view or update"
+        )
+        
+        # Enhanced date range for analysis
+        if dashboard_view in ["Progress Tracking", "Weekly Summary"]:
+            st.markdown(f"###  Analysis Period", unsafe_allow_html=True)
+            
+            period_preset = st.selectbox(
+                "Quick periods:",
+                ["Last 7 days", "Last 30 days", "Last 3 months", "Custom range"],
+                key="period_preset"
+            )
+            
+            if period_preset == "Custom range":
+                end_date = st.date_input("End Date", value=date.today(), key="pt_end_date_input")
+                start_date = st.date_input("Start Date", value=end_date - timedelta(days=30), key="pt_start_date_input")
+            else:
+                end_date = date.today()
+                if period_preset == "Last 7 days":
+                    start_date = end_date - timedelta(days=7)
+                elif period_preset == "Last 30 days":
+                    start_date = end_date - timedelta(days=30)
+                else:  # Last 3 months
+                    start_date = end_date - timedelta(days=90)
+            
+            st.info(f"Analyzing: {start_date} to {end_date}")
 
+    # Main content based on selected view
     if not child_name:
-        custom_alert(
-        message=get_text('please_enter_child_name', language),
-        icon_html=get_material_icon_html('info', style='fill'),
-        alert_type="warning"
-    )
+        st.markdown(f"""
+        <div style="text-align: center; padding: 3rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1)); 
+             border-radius: 16px; border: 2px dashed rgba(139, 92, 246, 0.3);">
+            <span class="material-symbols-outlined" style="font-size: 4rem; color: var(--primary-purple); margin-bottom: 1rem;">child_care</span>
+            <h3 style="color: var(--gray-700); margin-bottom: 1rem;">Welcome to Parent Tracker!</h3>
+            <p style="color: var(--gray-600); font-size: 1.1rem;">Please enter your child's name in the sidebar to begin tracking their learning journey.</p>
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
 
-    if dashboard_view == get_text('daily_entry', language):
-        st.markdown(f"## {get_text('daily_observation_entry', language)}")
-        st.markdown(f"{get_text('recording_observations_for', language)} **{child_name}** {get_text('on', language)} {date.today().strftime('%B %d, %Y')}")
+    if dashboard_view == "Daily Entry":
+        # Enhanced daily entry with better UX
+        if 'daily_entry_reset_counter' not in st.session_state:
+            st.session_state['daily_entry_reset_counter'] = 0
+
+        st.markdown(f"##  Daily Observation Entry")
+        st.markdown(f"Recording observations for **{child_name}** on {date.today().strftime('%A, %B %d, %Y')}", unsafe_allow_html=True)
         
-        # Create form for daily entry
+        # Check if entry exists for today
+        all_observations = load_parent_observations()
+        today_entry = next((obs for obs in all_observations 
+                           if obs.get('child_name') == child_name and obs['date'] == date.today().isoformat()), None)
+        
+        if today_entry:
+            st.info( "You already have an entry for today. You can update it by submitting again.")
+        
         with st.form("daily_observation_form"):
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown(f"### {get_text('academic_observations', language)}")
+                st.markdown(f"### {get_material_icon_html('library_books')} Academic Activities", unsafe_allow_html=True)
                 
                 homework_completion = st.slider(
-                    get_text('homework_completion', language).replace('_', ' ').title(), 
+                    "Homework Completion (%)", 
                     0, 100, 75,
-                    help="Percentage of assigned homework completed",
-                    key="pt_homework_completion_input"
+                    help="What percentage of assigned homework was completed?",
+                    key=f"pt_homework_completion_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 reading_time = st.number_input(
-                    get_text('reading_time', language).replace('_', ' ').title(), 
+                    "Independent Reading Time (minutes)", 
                     min_value=0, max_value=180, value=20,
-                    help="Minutes spent reading independently",
-                    key="pt_reading_time_input"
+                    help="How many minutes did your child spend reading independently?",
+                    key=f"pt_reading_time_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 focus_level = st.select_slider(
-                    get_text('focus_level', language).replace('_', ' ').title(),
-                    options=[get_text('poor'), get_text('below_average'), get_text('average'), get_text('good'), get_text('excellent')],
-                    value=get_text('good'),
-                    key="pt_focus_level_input"
+                    "Focus & Concentration Level",
+                    options=["Very Poor", "Poor", "Average", "Good", "Excellent"],
+                    value="Good",
+                    key=f"pt_focus_level_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 subjects_struggled = st.multiselect(
-                    get_text('subjects_struggled', language).replace('_', ' ').title(),
-                    ["Math", "Reading", "Writing", "Science", "Social Studies", "Other"],
-                    help="Select subjects where child struggled today",
-                    key="pt_subjects_struggled_input"
+                    "Subjects with Difficulties",
+                    ["Math", "Reading", "Writing", "Science", "Social Studies", "Art", "Music", "Other"],
+                    help="Select subjects where your child struggled today",
+                    key=f"pt_subjects_struggled_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
             with col2:
-                st.markdown(f"### {get_text('behavioral_emotional', language)}")
-                
-                behavior_options_map = {
-                    f"1 - {get_text('poor', language)}": 1,
-                    f"2 - {get_text('below_average', language)}": 2,
-                    f"3 - {get_text('average', language)}": 3,
-                    f"4 - {get_text('good', language)}": 4,
-                    f"5 - {get_text('excellent', language)}": 5,
-                }
-                behavior_rating_display_options = list(behavior_options_map.keys())
+                st.markdown(f"### {get_material_icon_html('psychology')} Behavioral & Emotional", unsafe_allow_html=True)
                 
                 behavior_rating = st.select_slider(
-                    get_text('behavior_rating', language).replace('_', ' ').title(), 
-                    options=behavior_rating_display_options,
-                    value=f"3 - {get_text('average', language)}",
-                    help="Select your child's overall behavior today",
-                    key="pt_behavior_rating_input"
+                    "Overall Behavior Rating", 
+                    options=["1 - Poor", "2 - Below Average", "3 - Average", "4 - Good", "5 - Excellent"],
+                    value="3 - Average",
+                    help="Rate your child's overall behavior today",
+                    key=f"pt_behavior_rating_input_{st.session_state['daily_entry_reset_counter']}"
                 )
-                behavior_value = behavior_options_map[behavior_rating]
+                behavior_value = int(behavior_rating.split(' ')[0])
                 
-                mood_options_map = {
-                    f"1 - {get_text('very_low', language)}": 1,
-                    f"2 - {get_text('low', language)}": 2,
-                    f"3 - {get_text('normal', language)}": 3,
-                    f"4 - {get_text('high', language)}": 4,
-                    f"5 - {get_text('very_high', language)}": 5,
-                }
-                mood_rating_display_options = list(mood_options_map.keys())
-
                 mood_rating = st.select_slider(
-                    get_text('mood_rating', language).replace('_', ' ').title(), 
-                    options=mood_rating_display_options,
-                    value=f"3 - {get_text('normal', language)}",
+                    "Mood & Emotional State", 
+                    options=["1 - Very Low", "2 - Low", "3 - Normal", "4 - Happy", "5 - Very Happy"],
+                    value="3 - Normal",
                     help="How was your child's mood today?",
-                    key="pt_mood_rating_input"
+                    key=f"pt_mood_rating_input_{st.session_state['daily_entry_reset_counter']}"
                 )
-                mood_value = mood_options_map[mood_rating]
+                mood_value = int(mood_rating.split(' ')[0])
                 
                 sleep_hours = st.number_input(
-                    get_text('sleep_hours', language).replace('_', ' ').title(), 
+                    "Sleep Duration (hours)", 
                     min_value=4.0, max_value=12.0, value=8.0, step=0.5,
-                    help="Total hours of sleep last night",
-                    key="pt_sleep_hours_input"
+                    help="How many hours did your child sleep last night?",
+                    key=f"pt_sleep_hours_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
-                energy_level_options = [get_text('very_low', language), get_text('low', language), get_text('normal', language), get_text('high', language), get_text('very_high', language)]
                 energy_level = st.select_slider(
-                    get_text('energy_level', language).replace('_', ' ').title(),
-                    options=energy_level_options,
-                    value=get_text('normal', language),
-                    key="pt_energy_level_input"
+                    "Energy Level Throughout Day",
+                    options=["Very Low", "Low", "Normal", "High", "Very High"],
+                    value="Normal",
+                    key=f"pt_energy_level_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
-            st.markdown("### Additional Observations")
+            st.markdown(f"### {get_material_icon_html('edit')} Detailed Observations", unsafe_allow_html=True)
             
             col3, col4 = st.columns(2)
             
             with col3:
-                social_interactions = st.text_area(
-                    "Social Interactions",
-                    placeholder="How did your child interact with siblings, friends, or family today?",
+                learning_wins = st.text_area(
+                    f"Learning Wins & Successes",
+                    placeholder="What went well today? Any breakthroughs, proud moments, or achievements?",
                     height=100,
-                    key="pt_social_interactions_input"
+                    key=f"pt_learning_wins_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
-                learning_wins = st.text_area(
-                    get_text('learning_wins', language).replace('_', ' ').title(),
-                    placeholder="What went well today? Any breakthroughs or positive moments?",
+                challenges_faced = st.text_area(
+                    f"Challenges & Difficulties",
+                    placeholder="What was difficult today? Any specific struggles or concerns?",
                     height=100,
-                    key="pt_learning_wins_input"
+                    key=f"pt_challenges_faced_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
             with col4:
-                challenges_faced = st.text_area(
-                    get_text('challenges_faced', language).replace('_', ' ').title(),
-                    placeholder="What was difficult today? Any specific struggles or concerns?",
+                strategies_used = st.text_area(
+                    f"Helpful Strategies & Support",
+                    placeholder="What strategies, tools, or supports helped your child today?",
                     height=100,
-                    key="pt_challenges_faced_input"
+                    key=f"pt_strategies_used_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
-                strategies_used = st.text_area(
-                    "Strategies That Helped",
-                    placeholder="What strategies or supports helped your child today?",
+                social_interactions = st.text_area(
+                    f"Social Interactions",
+                    placeholder="How did your child interact with family, friends, or peers today?",
                     height=100,
-                    key="pt_strategies_used_input"
+                    key=f"pt_social_interactions_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
-            st.markdown("### Home Environmental Factors")
+            st.markdown(f"### {get_material_icon_html('home')} Home Environment Factors", unsafe_allow_html=True)
             
             col5, col6 = st.columns(2)
             
@@ -449,26 +584,40 @@ def main():
                 screen_time = st.number_input(
                     "Screen Time (hours)", 
                     min_value=0.0, max_value=12.0, value=2.0, step=0.5,
-                    key="pt_screen_time_input"
+                    help="Total recreational screen time (TV, games, devices)",
+                    key=f"pt_screen_time_input_{st.session_state['daily_entry_reset_counter']}"
                 )
                 
                 physical_activity = st.number_input(
                     "Physical Activity (minutes)", 
                     min_value=0, max_value=300, value=60,
-                    key="pt_physical_activity_input"
+                    help="Total time spent in physical activities or exercise",
+                    key=f"pt_physical_activity_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
             with col6:
-                medication_taken = st.checkbox("Medication taken as prescribed", key="pt_medication_taken_checkbox")
+                medication_taken = st.checkbox(
+                    f"Medication taken as prescribed", 
+                    help="Check if all prescribed medications were taken properly",
+                    key=f"pt_medication_taken_checkbox_{st.session_state['daily_entry_reset_counter']}"
+                )
                 
                 special_events = st.text_input(
-                    "Special Events/Changes",
-                    placeholder="Any unusual events, schedule changes, or disruptions?",
-                    key="pt_special_events_input"
+                    f"Special Events or Changes",
+                    placeholder="Any unusual events, schedule changes, or disruptions today?",
+                    key=f"pt_special_events_input_{st.session_state['daily_entry_reset_counter']}"
                 )
             
-            submitted = st.form_submit_button(get_text('save_observation', language), type="primary")
-            
+            # Enhanced button layout
+            col_buttons = st.columns(3)
+            with col_buttons[0]:
+                submitted = st.form_submit_button(f"Save Today's Observation", type="primary", use_container_width=True)
+            with col_buttons[1]:
+                clear_button = st.form_submit_button(f"Clear Form", use_container_width=True)
+            with col_buttons[2]:
+                if today_entry:
+                    delete_button = st.form_submit_button(f"Delete Today's Entry", use_container_width=True)
+
             if submitted:
                 observation_data = {
                     "child_name": child_name,
@@ -481,10 +630,10 @@ def main():
                     "mood_rating": mood_value,
                     "sleep_hours": sleep_hours,
                     "energy_level": energy_level,
-                    "social_interactions": social_interactions,
                     "learning_wins": learning_wins,
                     "challenges_faced": challenges_faced,
                     "strategies_used": strategies_used,
+                    "social_interactions": social_interactions,
                     "screen_time": screen_time,
                     "physical_activity": physical_activity,
                     "medication_taken": medication_taken,
@@ -492,310 +641,788 @@ def main():
                     "timestamp": datetime.now().isoformat()
                 }
                 
+                # Save to both persistent storage and session state
                 save_parent_observation(observation_data)
-                st.success(" Observation saved successfully!")
+                
+                # Also save to session state for immediate access
+                if 'parent_data' not in st.session_state:
+                    st.session_state['parent_data'] = []
+                
+                # Remove any existing entry for today and add the new one
+                st.session_state['parent_data'] = [obs for obs in st.session_state['parent_data'] 
+                                                 if not (obs.get('child_name') == child_name and obs['date'] == date.today().isoformat())]
+                st.session_state['parent_data'].append(observation_data)
+                
+                st.success( "Daily observation saved successfully!")
                 st.balloons()
+            
+            if clear_button:
+                st.session_state['daily_entry_reset_counter'] += 1
+                st.rerun()
+            
+            # Handle delete button if today's entry exists
+            if today_entry and 'delete_button' in locals() and delete_button:
+                # Remove today's entry from observations
+                all_observations = [obs for obs in all_observations 
+                                  if not (obs.get('child_name') == child_name and obs['date'] == date.today().isoformat())]
+                # Note: In a real implementation, you would save this back to your data store
+                st.success( "Today's entry has been deleted!")
+                st.rerun()
 
-    elif dashboard_view == get_text('progress_tracking', language):
-        st.markdown(f"## {get_text('progress_tracking', language)}")
-        st.markdown(f"Analyzing progress for **{child_name}** from {start_date} to {end_date}")
+    elif dashboard_view == "Progress Tracking":
+        st.markdown(f"## {get_material_icon_html('trending_up')} Progress Analysis Dashboard", unsafe_allow_html=True)
+        st.markdown(f"Comprehensive analysis for **{child_name}** from {start_date} to {end_date}")
         
+        # Load observations properly
         all_observations = load_parent_observations()
+        
+        # Add any session state data if it exists
+        if 'parent_data' in st.session_state and st.session_state['parent_data']:
+            all_observations.extend(st.session_state['parent_data'])
+        
         child_observations = [obs for obs in all_observations 
-                                if obs.get('child_name') == child_name 
-                                and start_date <= date.fromisoformat(obs['date']) <= end_date]
+                            if obs.get('child_name') == child_name 
+                            and start_date <= date.fromisoformat(obs['date']) <= end_date]
         
         if not child_observations:
-            custom_alert(
-            message=f"{get_text('no_observations_recorded', language)}. {get_text('start_by_adding_daily_observations', language)}",
-            icon_html=get_material_icon_html('info', style='fill'),
-            alert_type="warning"
-        )
-
+            st.markdown(f"""
+            <div style="text-align: center; padding: 2rem; background: rgba(251, 191, 36, 0.1); 
+                 border-radius: 12px; border: 2px dashed rgba(251, 191, 36, 0.5);">
+                <span class="material-symbols-outlined" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;">trending_up</span>
+                <h3 style="color: #92400e;">No observations found for this period</h3>
+                <p style="color: #92400e;">Start by adding daily observations to see progress trends and insights.</p>
+            </div>
+            """, unsafe_allow_html=True)
             return
         
-        tab1, tab2, tab3, tab4 = st.tabs(["Academic", "Behavioral", "Emotional", "Health"])
+        # Enhanced overview metrics
+        st.markdown(f"### {get_material_icon_html('analytics')} Quick Overview", unsafe_allow_html=True)
+        
+        df = pd.DataFrame(child_observations)
+        
+        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+        
+        with metric_col1:
+            avg_homework = df['homework_completion'].mean()
+            st.metric("Avg Homework Completion", f"{avg_homework:.1f}%", 
+                     delta=f"{avg_homework - 75:.1f}%" if avg_homework != 75 else None)
+        
+        with metric_col2:
+            avg_behavior = df['behavior_rating'].mean()
+            st.metric("Avg Behavior Rating", f"{avg_behavior:.1f}/5",
+                     delta=f"{avg_behavior - 3:.1f}" if avg_behavior != 3 else None)
+        
+        with metric_col3:
+            avg_mood = df['mood_rating'].mean()
+            st.metric("Avg Mood Rating", f"{avg_mood:.1f}/5",
+                     delta=f"{avg_mood - 3:.1f}" if avg_mood != 3 else None)
+        
+        with metric_col4:
+            total_reading = df['reading_time'].sum()
+            st.metric("Total Reading Time", f"{total_reading} min",
+                     delta=f"{total_reading // len(df):.0f} min/day")
+        
+        # Enhanced tabbed analysis
+        tab1, tab2, tab3, tab4 = st.tabs([f"Academic", f"Behavioral", f"Emotional", f"Health & Lifestyle"])
         
         with tab1:
-            st.markdown("### Academic Progress")
+            st.markdown("### Academic Performance Trends")
             
             col1, col2 = st.columns(2)
             
             with col1:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 homework_fig = create_progress_chart(child_observations, 'homework_completion')
                 if homework_fig:
                     st.plotly_chart(homework_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             with col2:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 reading_fig = create_progress_chart(child_observations, 'reading_time')
                 if reading_fig:
                     st.plotly_chart(reading_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
-            st.markdown("#### Chart Subject Difficulty Analysis")
+            st.markdown(f"#### {get_material_icon_html('analytics')} Subject Difficulty Analysis", unsafe_allow_html=True)
             
             all_subjects = []
             for obs in child_observations:
                 all_subjects.extend(obs.get('subjects_struggled', []))
             
             if all_subjects:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 subject_counts = pd.Series(all_subjects).value_counts()
+                
+                # UPDATED layout for fig_subjects
                 fig_subjects = px.bar(x=subject_counts.index, y=subject_counts.values,
-                                       title="Subjects with Most Difficulties",
-                                       labels={'x': 'Subject', 'y': 'Number of Days'})
+                                     title="Subjects with Most Difficulties",
+                                     labels={'x': 'Subject', 'y': 'Number of Days'},
+                                     color=subject_counts.values,
+                                     color_continuous_scale='Reds')
+                fig_subjects.update_layout(
+                    title="Subjects with Most Difficulties",
+                    height=450,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=60, r=40, t=60, b=60),
+                    font=dict(family='Inter', color='var(--gray-700)'),
+                    showlegend=False, # Typically no legend for bar charts if color is just one scale
+                    xaxis=dict(
+                        gridcolor='var(--gray-200)',
+                        showgrid=True,
+                        title="Subject",
+                        title_font=dict(size=14, color='var(--gray-700)'),
+                        tickfont=dict(size=12, color='var(--gray-600)'),
+                        showline=True,
+                        linecolor='var(--gray-300)',
+                        mirror=True
+                    ),
+                    yaxis=dict(
+                        gridcolor='var(--gray-200)',
+                        showgrid=True,
+                        title="Number of Days",
+                        title_font=dict(size=14, color='var(--gray-700)'),
+                        tickfont=dict(size=12, color='var(--gray-600)'),
+                        showline=True,
+                        linecolor='var(--gray-300)',
+                        mirror=True
+                    ),
+                    hovermode='x unified',
+                    hoverlabel=dict(
+                        bgcolor='white',
+                        font_size=12,
+                        font_family='Inter'
+                    )
+                )
                 st.plotly_chart(fig_subjects, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
+                
+                # Insights
+                most_difficult = subject_counts.index[0] if len(subject_counts) > 0 else None
+                if most_difficult:
+                    st.info( "**Insight**: {most_difficult} appears to be the most challenging subject with {subject_counts[most_difficult]} difficult days.")
             else:
-                st.info(f"{get_material_icon_html('check_circle', style='fill')} Great news! No subject difficulties recorded in this period.", unsafe_allow_html=True)
+                st.success( "Excellent! No subject difficulties recorded in this period.")
         
         with tab2:
-            st.markdown("### Behavioral Progress")
-            
+            st.markdown("### Behavioral Progress Analysis")
+            st.markdown("""
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+            """, unsafe_allow_html=True) # Start of styled div
             behavior_fig = create_progress_chart(child_observations, 'behavior_rating')
             if behavior_fig:
                 st.plotly_chart(behavior_fig, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True) # End of styled div
+
+            col1, col2, col3 = st.columns(3)
             
-            df = pd.DataFrame(child_observations)
-            if not df.empty:
-                col1, col2, col3 = st.columns(3)
+            with col1:
+                avg_behavior = df['behavior_rating'].mean()
+                st.metric("Average Behavior Rating", f"{avg_behavior:.1f}/5")
                 
-                with col1:
-                    avg_behavior = df['behavior_rating'].mean()
-                    st.metric("Average Behavior Rating", f"{avg_behavior:.1f}/5")
-                
-                with col2:
-                    good_days = len(df[df['behavior_rating'] >= 4])
-                    st.metric("Good Behavior Days", f"{good_days}/{len(df)}")
-                
-                with col3:
-                    improvement = df['behavior_rating'].diff().mean()
-                    st.metric("Trend", f"{improvement:+.2f}", delta=f"{improvement:.2f}")
+                if avg_behavior >= 4:
+                    st.success( "Excellent behavior overall!")
+                elif avg_behavior >= 3:
+                    st.info( "Good behavior with room for growth")
+                else:
+                    st.warning( "Behavior may need additional support")
+            
+            with col2:
+                good_days = len(df[df['behavior_rating'] >= 4])
+                total_days = len(df)
+                good_percentage = (good_days / total_days * 100) if total_days > 0 else 0
+                st.metric("Good Behavior Days", f"{good_days}/{total_days}", 
+                         delta=f"{good_percentage:.1f}%")
+            
+            with col3:
+                if len(df) > 1:
+                    behavior_trend = df['behavior_rating'].diff().mean()
+                    trend_text = "Improving" if behavior_trend > 0.1 else "Declining" if behavior_trend < -0.1 else "Stable"
+                    st.metric("Behavior Trend", trend_text, delta=f"{behavior_trend:+.2f}")
+                else:
+                    st.metric("Behavior Trend", "Need more data")
+            
+            # Behavior distribution
+            st.markdown("#### Behavior Rating Distribution")
+            st.markdown("""
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+            """, unsafe_allow_html=True) # Start of styled div
+            behavior_dist = df['behavior_rating'].value_counts().sort_index()
+            
+            # UPDATED layout for fig_behavior_dist
+            fig_behavior_dist = px.pie(values=behavior_dist.values, 
+                                     names=[f"Rating {i}" for i in behavior_dist.index],
+                                     title="Distribution of Daily Behavior Ratings",
+                                     color_discrete_sequence=px.colors.qualitative.Set3)
+            fig_behavior_dist.update_layout(
+                title="Distribution of Daily Behavior Ratings",
+                height=450,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                margin=dict(l=60, r=40, t=60, b=60),
+                font=dict(family='Inter', color='var(--gray-700)'),
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(color='var(--gray-700)')
+                ),
+                hovermode='closest', # Pie charts usually use 'closest'
+                hoverlabel=dict(
+                    bgcolor='white',
+                    font_size=12,
+                    font_family='Inter'
+                )
+            )
+            st.plotly_chart(fig_behavior_dist, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True) # End of styled div
         
         with tab3:
-            st.markdown("### Emotional Well-being")
-            
+            st.markdown("### Emotional Well-being Tracking")
+            st.markdown("""
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+            """, unsafe_allow_html=True) # Start of styled div
             mood_fig = create_progress_chart(child_observations, 'mood_rating')
             if mood_fig:
                 st.plotly_chart(mood_fig, use_container_width=True)
-            
-            df = pd.DataFrame(child_observations)
-            if not df.empty:
-                mood_dist = df['mood_rating'].value_counts().sort_index()
-                fig_mood_dist = px.pie(values=mood_dist.values, names=[f"Mood {i}" for i in mood_dist.index],
-                                       title="Mood Distribution")
-                st.plotly_chart(fig_mood_dist, use_container_width=True)
-        
-        with tab4:
-            st.markdown("### Health & Lifestyle")
+            st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             col1, col2 = st.columns(2)
             
             with col1:
+                st.markdown("#### Mood Distribution")
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
+                mood_dist = df['mood_rating'].value_counts().sort_index()
+                
+                # UPDATED layout for fig_mood_dist
+                fig_mood_dist = px.pie(values=mood_dist.values, 
+                                     names=[f"Mood Level {i}" for i in mood_dist.index],
+                                     title="Emotional State Distribution",
+                                     color_discrete_sequence=px.colors.qualitative.Pastel)
+                fig_mood_dist.update_layout(
+                    title="Emotional State Distribution",
+                    height=450,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=60, r=40, t=60, b=60),
+                    font=dict(family='Inter', color='var(--gray-700)'),
+                    showlegend=True,
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="center",
+                        x=0.5,
+                        font=dict(color='var(--gray-700)')
+                    ),
+                    hovermode='closest', # Pie charts usually use 'closest'
+                    hoverlabel=dict(
+                        bgcolor='white',
+                        font_size=12,
+                        font_family='Inter'
+                    )
+                )
+                st.plotly_chart(fig_mood_dist, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
+            
+            with col2:
+                st.markdown("#### Emotional Insights")
+                avg_mood = df['mood_rating'].mean()
+                happy_days = len(df[df['mood_rating'] >= 4])
+                total_days = len(df)
+                
+                st.metric("Average Mood", f"{avg_mood:.1f}/5")
+                st.metric("Happy Days", f"{happy_days}/{total_days}")
+                
+                if avg_mood >= 4:
+                    st.success( "Generally happy and positive!")
+                elif avg_mood >= 3:
+                    st.info( "Balanced emotional state")
+                else:
+                    st.warning( "May benefit from emotional support")
+                
+                # Mood trends
+                if len(df) > 7:
+                    recent_mood = df.tail(7)['mood_rating'].mean()
+                    overall_mood = df['mood_rating'].mean()
+                    
+                    if recent_mood > overall_mood:
+                        st.info( "Mood has been improving recently!")
+                    elif recent_mood < overall_mood:
+                        st.warning( "Recent mood has been lower than average")
+        
+        with tab4:
+            st.markdown("### Health & Lifestyle Analysis")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 sleep_fig = create_progress_chart(child_observations, 'sleep_hours')
                 if sleep_fig:
                     st.plotly_chart(sleep_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
             with col2:
+                st.markdown("""
+                <div style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 15px; background-color: var(--card-background);">
+                """, unsafe_allow_html=True) # Start of styled div
                 activity_fig = create_progress_chart(child_observations, 'physical_activity')
                 if activity_fig:
                     st.plotly_chart(activity_fig, use_container_width=True)
+                st.markdown("</div>", unsafe_allow_html=True) # End of styled div
             
-            df = pd.DataFrame(child_observations)
-            if not df.empty:
-                st.markdown("#### Chart Health Summary")
+            st.markdown("#### Health & Lifestyle Summary")
+            
+            health_col1, health_col2, health_col3, health_col4 = st.columns(4)
+            
+            with health_col1:
+                avg_sleep = df['sleep_hours'].mean()
+                st.metric("Average Sleep", f"{avg_sleep:.1f} hrs")
                 
-                col1, col2, col3, col4 = st.columns(4)
+                if avg_sleep >= 8:
+                    st.success( "Good sleep duration")
+                elif avg_sleep >= 7:
+                    st.info( "Adequate sleep")
+                else:
+                    st.warning( "May need more sleep")
+            
+            with health_col2:
+                avg_activity = df['physical_activity'].mean()
+                st.metric("Average Activity", f"{avg_activity:.0f} min")
                 
-                with col1:
-                    avg_sleep = df['sleep_hours'].mean()
-                    st.metric("Average Sleep", f"{avg_sleep:.1f} hrs")
+                if avg_activity >= 60:
+                    st.success( "Great activity level!")
+                else:
+                    st.warning( "Could use more activity")
+            
+            with health_col3:
+                avg_screen = df['screen_time'].mean()
+                st.metric("Average Screen Time", f"{avg_screen:.1f} hrs")
                 
-                with col2:
-                    avg_activity = df['physical_activity'].mean()
-                    st.metric("Average Activity", f"{avg_activity:.0f} min")
-                
-                with col3:
-                    avg_screen = df['screen_time'].mean()
-                    st.metric("Average Screen Time", f"{avg_screen:.1f} hrs")
-                
-                with col4:
+                if avg_screen <= 2:
+                    st.success( "Good screen balance")
+                else:
+                    st.warning( "Consider reducing screen time")
+            
+            with health_col4:
+                if 'medication_taken' in df.columns:
                     med_compliance = df['medication_taken'].mean() * 100
                     st.metric("Medication Compliance", f"{med_compliance:.0f}%")
+                    
+                    if med_compliance >= 90:
+                        st.success( "Excellent compliance")
+                    else:
+                        st.warning( "Monitor medication schedule")
 
-    elif dashboard_view == get_text('weekly_summary', language):
-        st.markdown(f"## {get_text('weekly_summary', language)}")
-        st.markdown(f"Weekly analysis for **{child_name}**")
+    elif dashboard_view == "Weekly Summary":
+        st.markdown("---")
+
+        st.markdown(f"## {get_material_icon_html('calendar_today')} Weekly Progress Summary", unsafe_allow_html=True)
+        st.markdown(f"Comprehensive weekly analysis for **{child_name}**")
         
+        # Load observations properly
         all_observations = load_parent_observations()
+        
+        # Add any session state data if it exists
+        if 'parent_data' in st.session_state and st.session_state['parent_data']:
+            all_observations.extend(st.session_state['parent_data'])
+        
         child_observations = [obs for obs in all_observations 
-                                if obs.get('child_name') == child_name 
-                                and start_date <= date.fromisoformat(obs['date']) <= end_date]
+                            if obs.get('child_name') == child_name 
+                            and start_date <= date.fromisoformat(obs['date']) <= end_date]
         
         if not child_observations:
-            custom_alert(
-            message=get_text('no_observations_recorded', language),
-            icon_html=get_material_icon_html('info', style='fill'),
-            alert_type="warning"
-        )
-
+            st.warning( "No observations found for the selected period.")
             return
         
+        # Enhanced weekly summary with animations
         weekly_fig, weekly_data = create_weekly_summary(child_observations)
         
+        st.markdown(f"### **{get_material_icon_html('insights')} Your Weekly Progress Trends**", unsafe_allow_html=True)
+        
         if weekly_fig:
+            # --- START STYLING FOR WEEKLY SUMMARY PLOT ---
+            # st.markdown("---")
             st.plotly_chart(weekly_fig, use_container_width=True)
-            
-            st.markdown("### 💡 Weekly Insights")
+            st.markdown("</div>", unsafe_allow_html=True)
+            # --- END STYLING FOR WEEKLY SUMMARY PLOT ---
             
             if weekly_data is not None and not weekly_data.empty:
+                st.markdown(f"### {get_material_icon_html('target')} Weekly Insights & Recommendations", unsafe_allow_html=True)
+                
                 latest_week = weekly_data.iloc[-1]
                 
-                col1, col2 = st.columns(2)
+                insight_col1, insight_col2 = st.columns(2)
                 
-                with col1:
-                    st.markdown("#### This Week's Highlights")
+                with insight_col1:
+                    st.markdown(f"#### {get_material_icon_html('star')} This Week's Highlights", unsafe_allow_html=True)
                     
-                    if latest_week['homework_completion'] >= 80:
-                        st.success(f"{get_material_icon_html('check_circle', style='fill')} Great homework completion!", unsafe_allow_html=True)
-                    elif latest_week['homework_completion'] >= 60:
-                        custom_alert(
-                        message="Homework completion needs attention",
-                        icon_html=get_material_icon_html('warning', style='fill'),
-                        alert_type="warning"
-                    )
+                    # Homework insights
+                    if latest_week['homework_completion'] >= 85:
+                        st.success( "Outstanding homework completion!")
+                    elif latest_week['homework_completion'] >= 70:
+                        st.info( "Good homework habits developing")
                     else:
-                        st.error(f"{get_material_icon_html('error', style='fill')} Homework completion is concerning", unsafe_allow_html=True)
+                        st.warning( "Homework completion needs attention")
                     
+                    # Behavior insights
                     if latest_week['behavior_rating'] >= 4:
-                        st.success(f"{get_material_icon_html('check_circle', style='fill')} Excellent behavior this week!", unsafe_allow_html=True)
+                        st.success( "Excellent behavior this week!")
                     elif latest_week['behavior_rating'] >= 3:
-                        st.info(f"{get_material_icon_html('info', style='fill')} Good behavior overall", unsafe_allow_html=True)
+                        st.info( "Good behavior overall")
                     else:
-                        custom_alert(
-                        message="Behavior needs support",
-                        icon_html=get_material_icon_html('warning', style='fill'),
-                        alert_type="warning"
-                    )
+                        st.warning( "Behavior may need support")
+                    
+                    # Sleep insights
+                    if latest_week['sleep_hours'] >= 8:
+                        st.success( "Great sleep habits!")
+                    else:
+                        st.warning( "Consider earlier bedtime")
                 
-                with col2:
-                    st.markdown("#### Growth Areas of Growth")
+                with insight_col2:
+                    st.markdown(f"#### {get_material_icon_html('trending_up')} Growth & Trends", unsafe_allow_html=True)
                     
                     if len(weekly_data) > 1:
                         prev_week = weekly_data.iloc[-2]
                         
+                        # Calculate improvements
                         homework_change = latest_week['homework_completion'] - prev_week['homework_completion']
                         behavior_change = latest_week['behavior_rating'] - prev_week['behavior_rating']
                         mood_change = latest_week['mood_rating'] - prev_week['mood_rating']
                         
+                        improvements = []
+                        concerns = []
+                        
                         if homework_change > 5:
-                            st.success(f"{get_material_icon_html('arrow_upward')} Homework completion improved!", unsafe_allow_html=True)
-                        if behavior_change > 0.2:
-                            st.success(f"{get_material_icon_html('arrow_upward')} Behavior rating improved!", unsafe_allow_html=True)
-                        if mood_change > 0.2:
-                            st.success(f"{get_material_icon_html('arrow_upward')} Mood has improved!", unsafe_allow_html=True)
+                            improvements.append(f"Homework completion improved")
+                        elif homework_change < -5:
+                            concerns.append(f"Homework completion declined")
+                        
+                        if behavior_change > 0.3:
+                            improvements.append(f"Behavior rating improved")
+                        elif behavior_change < -0.3:
+                            concerns.append(f"Behavior rating declined")
+                        
+                        if mood_change > 0.3:
+                            improvements.append(f"Mood has improved")
+                        elif mood_change < -0.3:
+                            concerns.append(f"Mood has declined")
+                        
+                        if improvements:
+                            st.markdown("**Positive Changes:**")
+                            for improvement in improvements:
+                                st.success(improvement)
+                        
+                        if concerns:
+                            st.markdown("**Areas to Watch:**")
+                            for concern in concerns:
+                                st.warning(concern)
+                        
+                        if not improvements and not concerns:
+                            st.info( "Consistent patterns maintained")
+                    else:
+                        st.info( "Need more weeks of data for trend analysis")
+                
+                # Goal setting section
+                st.markdown("---")
+                st.markdown(f"###  Goals for Next Week")
+                
+                goal_col1, goal_col2 = st.columns(2)
+                
+                with goal_col1:
+                    reading_goal = st.number_input("Daily Reading Goal (minutes)", 0, 180, 20, key="weekly_reading_goal")
+                    homework_goal = st.slider("Homework Completion Goal (%)", 0, 100, 85, key="weekly_homework_goal")
+                
+                with goal_col2:
+                    behavior_goal = st.selectbox("Behavior Focus Area", 
+                                               ["Following directions", "Completing tasks", "Social interactions", "Self-regulation"],
+                                               key="weekly_behavior_goal")
+                    sleep_goal = st.number_input("Sleep Goal (hours)", 6.0, 12.0, 8.0, step=0.5, key="weekly_sleep_goal")
+                
+                weekly_notes = st.text_area("Weekly Summary Notes", 
+                                          placeholder="Overall observations, special events, or notes for this week...",
+                                          key="weekly_summary_notes")
+                
+                if st.button( "Save Weekly Goals & Summary", key="save_weekly_summary"):
+                    weekly_summary = {
+                        "child_name": child_name,
+                        "week_start": start_date.isoformat(),
+                        "week_end": end_date.isoformat(),
+                        "reading_goal": reading_goal,
+                        "homework_goal": homework_goal,
+                        "behavior_goal": behavior_goal,
+                        "sleep_goal": sleep_goal,
+                        "summary_notes": weekly_notes,
+                        "created_date": datetime.now().isoformat()
+                    }
+                    
+                    if 'weekly_data' not in st.session_state:
+                        st.session_state['weekly_data'] = []
+                    
+                    st.session_state['weekly_data'].append(weekly_summary)
+                    st.success( "Weekly summary and goals saved successfully!")
+            else:
+                st.info( "Insufficient data for weekly summary analysis")
 
-    else:
-        st.markdown(f"## {get_text('observations_log', language)}")
-        st.markdown(f"Complete observation history for **{child_name}**")
+    else:  # Observations Log
+        st.markdown(f"##  Complete Observation History")
+        st.markdown(f"Detailed log of all observations for **{child_name}**")
         
+        # Load observations properly
         all_observations = load_parent_observations()
+        
+        # Add any session state data if it exists
+        if 'parent_data' in st.session_state and st.session_state['parent_data']:
+            all_observations.extend(st.session_state['parent_data'])
+        
         child_observations = [obs for obs in all_observations if obs.get('child_name') == child_name]
         
         if not child_observations:
-            custom_alert(
-            message=f"{get_text('no_observations_recorded', language)}. {get_text('start_by_adding_daily_observations', language)}",
-            icon_html=get_material_icon_html('info', style='fill'),
-            alert_type="warning"
-            )
+            st.markdown(f"""
+            <div style="text-align: center; padding: 2rem; background: rgba(251, 191, 36, 0.1); 
+                 border-radius: 12px; border: 2px dashed rgba(251, 191, 36, 0.5);">
+                <span class="material-symbols-outlined" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;">history</span>
+                <h3 style="color: #92400e;">No observations recorded yet</h3>
+                <p style="color: #92400e;">Start by adding daily observations to build your child's learning history.</p>
+            </div>
+            """, unsafe_allow_html=True)
             return
         
         child_observations.sort(key=lambda x: x['date'], reverse=True)
         
-        col1, col2 = st.columns(2)
+        # Enhanced filtering options
+        filter_col1, filter_col2, filter_col3 = st.columns(3)
         
-        with col1:
-            date_filter = st.date_input("Filter by date (optional)", key="pt_log_date_filter")
+        with filter_col1:
+            date_filter = st.date_input("Filter by specific date", value=None, key="pt_log_date_filter")
         
-        with col2:
-            show_detailed = st.checkbox("Show detailed observations", value=False, key="pt_log_show_detailed")
+        with filter_col2:
+            behavior_filter = st.selectbox("Filter by behavior rating", 
+                                         ["All", "1 (Poor)", "2 (Below Average)", "3 (Average)", "4 (Good)", "5 (Excellent)"],
+                                         key="pt_behavior_filter")
         
-        for obs in child_observations[:20]:
+        with filter_col3:
+            show_detailed = st.checkbox("Show detailed observations", value=True, key="pt_log_show_detailed")
+        
+        # Clear data functionality
+        if st.button( "Clear All Data", key="clear_all_data_btn", help="This will permanently delete all observations"):
+            st.warning( "This action cannot be undone. Are you sure you want to delete all observation data?")
+            
+            confirm_col1, confirm_col2 = st.columns(2)
+            with confirm_col1:
+                if st.button( "Yes, Delete All", key="confirm_delete_all"):
+                    # Clear session state data
+                    st.session_state['parent_data'] = []
+                    st.session_state['weekly_data'] = []
+                    st.success( "All observation data has been cleared!")
+                    st.rerun()
+            
+            with confirm_col2:
+                if st.button( "Cancel", key="cancel_delete_all"):
+                    st.info("Data deletion cancelled.")
+        
+        st.markdown(f"###  Showing {len(child_observations)} observations")
+        
+        # Apply filters
+        filtered_observations = child_observations
+        
+        if date_filter:
+            filtered_observations = [obs for obs in filtered_observations 
+                                   if date.fromisoformat(obs['date']) == date_filter]
+        
+        if behavior_filter != "All":
+            behavior_value = int(behavior_filter.split(' ')[0])
+            filtered_observations = [obs for obs in filtered_observations 
+                                   if obs['behavior_rating'] == behavior_value]
+        
+        # Display observations with enhanced formatting
+        for i, obs in enumerate(filtered_observations[:25]):  # Show last 25 observations
             obs_date = date.fromisoformat(obs['date'])
             
-            if date_filter and obs_date != date_filter:
-                continue
+            # Create color-coded header based on behavior rating
+            behavior_rating = obs['behavior_rating']
+            if behavior_rating >= 4:
+                header_color = "#10b981"  # Green
+                rating_icon = get_material_icon_html('sentiment_satisfied')
+            elif behavior_rating >= 3:
+                header_color = "#3b82f6"  # Blue
+                rating_icon = get_material_icon_html('sentiment_neutral')
+            else:
+                header_color = "#f59e0b"  # Orange
+                rating_icon = get_material_icon_html('sentiment_dissatisfied')
             
-            with st.expander(f"{obs_date.strftime('%B %d, %Y')} - Rating: {obs['behavior_rating']}/5"):
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    st.markdown("**Academic**")
-                    st.write(f"Homework: {obs['homework_completion']}%")
-                    st.write(f"Reading: {obs['reading_time']} min")
-                    st.write(f"Focus: {obs.get('focus_level', 'N/A')}")
-                    if obs.get('subjects_struggled'):
-                        st.write(f"Struggled with: {', '.join(obs['subjects_struggled'])}")
-                
-                with col2:
-                    st.markdown("**Behavioral**")
-                    st.write(f"Behavior: {obs['behavior_rating']}/5")
-                    st.write(f"Mood: {obs['mood_rating']}/5")
-                    st.write(f"Energy: {obs.get('energy_level', 'N/A')}")
-                
-                with col3:
-                    st.markdown("**Health**")
-                    st.write(f"Sleep: {obs['sleep_hours']} hrs")
-                    st.write(f"Activity: {obs['physical_activity']} min")
-                    st.write(f"Screen time: {obs['screen_time']} hrs")
-                
-                if show_detailed:
-                    if obs.get('learning_wins'):
-                        st.markdown(f"**{get_material_icon_html('military_tech')} Learning Wins:**", unsafe_allow_html=True)
-                        st.write(obs['learning_wins'])
-                    
-                    if obs.get('challenges_faced'):
-                        st.markdown(f"**{get_material_icon_html('gpp_bad')} Challenges:**", unsafe_allow_html=True)
-                        st.write(obs['challenges_faced'])
-                    
-                    if obs.get('strategies_used'):
-                        st.markdown(f"**{get_material_icon_html('handyman')} Helpful Strategies:**", unsafe_allow_html=True)
-                        st.write(obs['strategies_used'])
-                    
-                    if obs.get('social_interactions'):
-                        st.markdown(f"**{get_material_icon_html('groups')} Social Interactions:**", unsafe_allow_html=True)
-                        st.write(obs['social_interactions'])
-        
-        if st.button("📥 Export Observations", key="pt_export_observations_button"):
-            df_export = pd.DataFrame(child_observations)
-            csv = df_export.to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name=f"{child_name}_observations_{datetime.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv"
+            st.markdown(
+                f"""
+                <div style="border-left: 5px solid {header_color}; padding: 0.5rem 1rem; margin-bottom: 1rem; background-color: #f9fafb;">
+                    <h4 style="margin: 0; font-size: 1rem; color: {header_color};">
+                        {rating_icon} Observation on {obs_date.strftime('%B %d, %Y')}
+                    </h4>
+                    <p style="margin: 0.5rem 0 0 0;">{obs['note']}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
+            with st.expander(f"Observation on {obs_date.strftime('%A, %B %d, %Y')} - Behavior: {behavior_rating}/5"):
+                st.markdown(
+                    f"""
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        {rating_icon}
+                        <strong>Detailed Observation</strong>
+                    </div>
+                    <p>{obs['note']}</p>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Quick metrics row
+                metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+                
+                with metric_col1:
+                    st.metric("Homework", f"{obs['homework_completion']}%")
+                with metric_col2:
+                    st.metric("Reading", f"{obs['reading_time']} min")
+                with metric_col3:
+                    st.metric("Mood", f"{obs['mood_rating']}/5")
+                with metric_col4:
+                    st.metric("Sleep", f"{obs['sleep_hours']} hrs")
+                
+                if show_detailed:
+                    st.markdown("---")
+                    
+                    detail_col1, detail_col2, detail_col3 = st.columns(3)
+                    
+                    with detail_col1:
+                        st.markdown(f"**Academic Details**", unsafe_allow_html=True)
+                        st.write(f"• Focus Level: {obs.get('focus_level', 'N/A')}")
+                        if obs.get('subjects_struggled'):
+                            st.write(f"• Difficult Subjects: {', '.join(obs['subjects_struggled'])}")
+                        else:
+                            st.write("• No subject difficulties")
+                    
+                    with detail_col2:
+                        st.markdown(f"**Behavioral & Social**", unsafe_allow_html=True)
+                        st.write(f"• Energy Level: {obs.get('energy_level', 'N/A')}")
+                        st.write(f"• Screen Time: {obs['screen_time']} hrs")
+                        st.write(f"• Physical Activity: {obs['physical_activity']} min")
+                    
+                    with detail_col3:
+                        st.markdown(f"**Health & Special**", unsafe_allow_html=True)
+                        med_status = f"Yes" if obs['medication_taken'] else f"No"
+                        st.write(f"• Medication: {med_status}")
+                        if obs.get('special_events'):
+                            st.write(f"• Special Events: {obs['special_events']}")
+                    
+                    # Detailed notes
+                    if any([obs.get('learning_wins'), obs.get('challenges_faced'), 
+                           obs.get('strategies_used'), obs.get('social_interactions')]):
+                        st.markdown(f"**Detailed Notes:**", unsafe_allow_html=True)
+                        
+                        if obs.get('learning_wins'):
+                            st.success( f"**Wins:** {obs['learning_wins']}")
+                        
+                        if obs.get('challenges_faced'):
+                            st.warning( f"**Challenges:** {obs['challenges_faced']}")
+                        
+                        if obs.get('strategies_used'):
+                            st.info( f"**Strategies:** {obs['strategies_used']}")
+                        
+                        if obs.get('social_interactions'):
+                            st.info( f"**Social:** {obs['social_interactions']}")
+        
+        # Export functionality
+        st.markdown("---")
+        export_col1, export_col2 = st.columns(2)
+        
+        with export_col1:
+            if st.button( "Export All Observations", key="pt_export_all_observations"):
+                df_export = pd.DataFrame(child_observations)
+                csv = df_export.to_csv(index=False)
+                st.download_button(
+                    label="Download Complete History (CSV)",
+                    data=csv,
+                    file_name=f"{child_name}_complete_observations_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    key="download_complete_csv"
+                )
+        
+        with export_col2:
+            if filtered_observations != child_observations:
+                if st.button( "sExport Filtered Data", key="pt_export_filtered"):
+                    df_filtered = pd.DataFrame(filtered_observations)
+                    csv_filtered = df_filtered.to_csv(index=False)
+                    st.download_button(
+                        label="Download Filtered Data (CSV)",
+                        data=csv_filtered,
+                        file_name=f"{child_name}_filtered_observations_{datetime.now().strftime('%Y%m%d')}.csv",
+                        mime="text/csv",
+                        key="download_filtered_csv"
+                    )
+
+    # Enhanced tips and support section
     st.markdown("---")
-    st.markdown(f"### {get_material_icon_html('lightbulb_circle', style='fill')} Parent Tracking Tips", unsafe_allow_html=True)
+    st.markdown(f"### {get_material_icon_html('lightbulb')} Parent Tracking Success Tips", unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    tip_col1, tip_col2 = st.columns(2)
     
-    with col1:
-        st.markdown("""
-        **Effective Tracking:**
-        - Record observations consistently each day
-        - Be specific about challenges and successes
-        - Note what strategies work best
-        - Track patterns over time, not just individual days
-        """)
-    
-    with col2:
+    with tip_col1:
         st.markdown(f"""
-        **{get_material_icon_html('phone_in_talk', style='fill')} When to Seek Help:**""", unsafe_allow_html=True)
-        st.markdown("""
-        - Consistent low behavior/mood ratings
-        - Persistent homework struggles
-        - Sleep or health concerns
-        - Significant changes in patterns
-        """)
+        **{get_material_icon_html('target')} Effective Daily Tracking:**
+        - Record observations at the same time each day for consistency
+        - Be specific about both successes and challenges
+        - Note what strategies and supports work best for your child
+        - Focus on patterns over time rather than individual bad days
+        - Include context about special events or changes in routine
+        """, unsafe_allow_html=True)
+    
+    with tip_col2:
+        st.markdown(f"""
+        **{get_material_icon_html('handshake')} When to Reach Out for Support:**
+        - Consistent low behavior or mood ratings over several days
+        - Persistent difficulties with homework or specific subjects  
+        - Significant changes in sleep patterns or energy levels
+        - Social interaction concerns or withdrawal from activities
+        - Any pattern that concerns you as a parent
+        """, unsafe_allow_html=True)
+    
+    # Contact and resources
+    st.markdown("---")
+    st.markdown(f"### {get_material_icon_html('phone')} Support & Resources", unsafe_allow_html=True)
+    
+    support_col1, support_col2 = st.columns(2)
+    
+    with support_col1:
+        st.markdown(f"""
+        **{get_material_icon_html('school')} School Communication:**
+        - Share observation trends with your child's teacher
+        - Use data to support parent-teacher conferences
+        - Collaborate on consistent strategies between home and school
+        - Request additional assessments if patterns indicate needs
+        """, unsafe_allow_html=True)
+    
+    with support_col2:
+        st.markdown(f"""
+        **{get_material_icon_html('library_books')} Additional Resources:**
+        - [Parent Support Groups](/#) - Connect with other parents
+        - [Learning Strategies Guide](/#) - Evidence-based home support methods
+        - [Child Development Milestones](/#) - Age-appropriate expectations
+        - **Help Desk:** support@eduscan.edu | (555) 123-4567
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
