@@ -49,5 +49,5 @@ validators
 watchdog
 zipp
 streamlit-lottie
-pymongo
-dnspython
+pymongo==4.7.2
+dnspython==2.6.1
