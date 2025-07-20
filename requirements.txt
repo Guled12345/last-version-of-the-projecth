@@ -49,3 +49,4 @@ validators
 watchdog
 zipp
 streamlit-lottie
+pymongo
