@@ -10,11 +10,11 @@ import random
 from pymongo import MongoClient
 
 # MongoDB Atlas connection
-import os
-mongo_uri = os.getenv('MONGODB_URI', 'mongodb+srv://guled:YourPassword@cluster0.mongodb.net/EduScan?retryWrites=true&w=majority')
+mongo_uri = st.secrets["mongodb"]["uri"]
 client = MongoClient(mongo_uri)
 db = client['EduScan']
 students_collection = db['students_data']
+
 
 # Import utilities
 from utils.language_utils import get_text, load_app_settings, save_app_settings
