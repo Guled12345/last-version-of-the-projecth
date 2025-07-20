@@ -5,44 +5,44 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, date, timedelta
-import json
 import os
-import pickle
 import random
+from pymongo import MongoClient
+
+# MongoDB Atlas connection
+import os
+mongo_uri = os.getenv('MONGODB_URI', 'mongodb+srv://guled:YourPassword@cluster0.mongodb.net/EduScan?retryWrites=true&w=majority')
+client = MongoClient(mongo_uri)
+db = client['EduScan']
+students_collection = db['students_data']
 
 # Import utilities
 from utils.language_utils import get_text, load_app_settings, save_app_settings
-from utils.data_utils import load_student_data
 from utils.auth_utils import is_authenticated, render_login_page, logout_user, get_user_role
-from utils.image_base64 import get_base64_images # Import get_base64_images for its dictionary
-
-# Corrected: All UI functions now imported from utils.exact_ui
+from utils.image_base64 import get_base64_images
 from utils.exact_ui import (
-    add_exact_ui_styles, # Apply overall app styles
-    render_exact_sidebar, # Sidebar structure and fixed content, including settings
-    render_exact_page_header, # Global header rendering function (without settings button)
-    create_exact_metric_card, # Helper for individual stat cards (used on Dashboard)
-    create_exact_chart_container, # Helper for chart containers
-    get_b64_image_html # Helper for rendering base64 images within HTML
+    add_exact_ui_styles,
+    render_exact_sidebar,
+    render_exact_page_header,
+    create_exact_metric_card,
+    create_exact_chart_container,
+    get_b64_image_html
 )
-from utils.icon_utils import ( # Icons are used within metric cards
+from utils.icon_utils import (
     get_total_students_icon, get_on_track_icon,
     get_at_risk_icon, get_intervention_icon,
-    get_material_icon_html # NEW: Import for specific Material Icons in header
+    get_material_icon_html
 )
 
-# IMPORTANT: Page config MUST be the first Streamlit command
 st.set_page_config(
-    page_title="EduScan - Learning Assessment Dashboard", # More readable title
-    page_icon=get_material_icon_html("school"), # Replaced emoji with Material Icon HTML
+    page_title="EduScan - Learning Assessment Dashboard",
+    page_icon=get_material_icon_html("school"),
     layout="wide",
-    initial_sidebar_state="expanded" # Default state (can be 'collapsed' for production)
+    initial_sidebar_state="expanded"
 )
 
-# Apply modern UI styles - CRITICAL to be at the top
 add_exact_ui_styles()
 
-# Initialize session state for settings
 if 'app_language' not in st.session_state:
     settings = load_app_settings()
     st.session_state['app_language'] = settings.get('language', 'English')
@@ -51,56 +51,45 @@ if 'offline_mode' not in st.session_state:
     st.session_state['offline_mode'] = settings.get('offline_mode', False)
 if 'app_theme' not in st.session_state:
     settings = load_app_settings()
-    st.session_state['app_theme'] = settings.get('theme', 'Light') # Default theme
+    st.session_state['app_theme'] = settings.get('theme', 'Light')
 
-# Get current language
 language = st.session_state.get('app_language', 'English')
-
-# Apply theme-specific body attribute via JavaScript to allow CSS targeting
 current_theme = st.session_state.get('app_theme', 'Light')
+
 st.markdown(f"""
     <script>
         document.body.setAttribute('data-theme', '{current_theme}');
     </script>
 """, unsafe_allow_html=True)
 
+def load_student_data_from_mongodb():
+    all_student_data = list(students_collection.find())
+    for student in all_student_data:
+        student.pop('_id', None)
+    return all_student_data
 
-# --- Dashboard Content Rendering Function ---
 def render_dashboard_page_content():
-    """Renders the main content of the Dashboard page."""
-    
-    # Top Header Section with improved readability
     render_exact_page_header(get_material_icon_html("dashboard"), 'Educational Assessment Dashboard', 'Comprehensive Learning Analytics Platform', language)
-
     st.markdown("<h3 style='font-size:1.5rem; font-weight:600; color:var(--gray-900); margin-bottom:1.5rem;'>System Overview</h3>", unsafe_allow_html=True)
-    
-    # --- Fetch actual data for dashboard stats ---
-    all_student_data = load_student_data()
+
+    all_student_data = load_student_data_from_mongodb()
     df_students = pd.DataFrame(all_student_data)
 
     total_students = len(df_students)
-    
-    # Calculate new students this month (example: last 30 days)
+
     new_this_month = 0
     if not df_students.empty:
         df_students['timestamp'] = pd.to_datetime(df_students['timestamp'])
         one_month_ago = datetime.now() - timedelta(days=30)
         new_this_month = df_students[df_students['timestamp'] >= one_month_ago].shape[0]
 
-    on_track_count = 0
-    at_risk_count = 0
-    intervention_count = 0
-    
-    if not df_students.empty:
-        # Assuming 'risk_level' is stored as 'Low Risk', 'Medium Risk', 'High Risk'
-        on_track_count = df_students[df_students['risk_level'] == 'Low Risk'].shape[0]
-        at_risk_count = df_students[df_students['risk_level'] == 'Medium Risk'].shape[0]
-        intervention_count = df_students[df_students['risk_level'] == 'High Risk'].shape[0]
+    on_track_count = df_students[df_students['risk_level'] == 'Low Risk'].shape[0] if not df_students.empty else 0
+    at_risk_count = df_students[df_students['risk_level'] == 'Medium Risk'].shape[0] if not df_students.empty else 0
+    intervention_count = df_students[df_students['risk_level'] == 'High Risk'].shape[0] if not df_students.empty else 0
 
     on_track_percentage = (on_track_count / total_students * 100) if total_students > 0 else 0
     at_risk_percentage = (at_risk_count / total_students * 100) if total_students > 0 else 0
-    
-    # Render Stat Cards with readable labels
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(create_exact_metric_card('Total Students', total_students, f"↑ {new_this_month} new this month", get_total_students_icon(), 'total'), unsafe_allow_html=True)
@@ -110,7 +99,21 @@ def render_dashboard_page_content():
         st.markdown(create_exact_metric_card('Students At Risk', at_risk_count, f"↑ {at_risk_percentage:.0f}% need support", get_at_risk_icon(), 'at-risk', change_type="negative"), unsafe_allow_html=True)
     with col4:
         st.markdown(create_exact_metric_card('Need Intervention', intervention_count, f"↑ {(intervention_count / total_students * 100):.0f}% urgent attention" if total_students > 0 else "↑ 0% urgent attention", get_intervention_icon(), 'intervention', change_type="negative"), unsafe_allow_html=True)
-    
+
+    # Additional visualizations can be added here like charts, tables etc.
+
+
+def main():
+    render_exact_sidebar()
+
+    if not is_authenticated():
+        render_login_page()
+        return
+
+    render_dashboard_page_content()
+
+if __name__ == "__main__":
+    main()
     # --- Performance Charts with readable titles ---
     st.markdown("<h3 style='font-size:1.5rem; font-weight:600; color:var(--gray-900); margin-top:2.5rem; margin-bottom:1.5rem;'>Performance Insights</h3>", unsafe_allow_html=True)
     chart_col1, chart_col2 = st.columns(2)
