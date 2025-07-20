@@ -112,8 +112,6 @@ def main():
 
     render_dashboard_page_content()
 
-if __name__ == "__main__":
-    main()
     # --- Performance Charts with readable titles ---
     st.markdown("<h3 style='font-size:1.5rem; font-weight:600; color:var(--gray-900); margin-top:2.5rem; margin-bottom:1.5rem;'>Performance Insights</h3>", unsafe_allow_html=True)
     chart_col1, chart_col2 = st.columns(2)
