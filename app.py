@@ -102,7 +102,6 @@ def render_dashboard_page_content():
 
     # Additional visualizations can be added here like charts, tables etc.
 
-
 def main():
     render_exact_sidebar()
 
